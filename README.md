@@ -5,6 +5,8 @@ Author: Alyssa Phillips
 Snakemake pipeline for variant calling in a large quaking aspen WGS dataset.
 The directory roughly follows a CookieCutter directory structure.
 
+## Project organization
+<pre>
 ├── README.md  
 |  
 ├── rules  
@@ -28,3 +30,4 @@ The directory roughly follows a CookieCutter directory structure.
 ├── qc 			            <- Quality check output for raw data  
 ├── Snakefile  
 └── config.yaml  
+</pre>
