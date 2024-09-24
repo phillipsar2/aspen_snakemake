@@ -12,21 +12,19 @@ Directory roughly follows a CookieCutter directory structure.
 |   ├── determine_ploidy.smk  
 |   ├── filtering.smk  
 |   └── mapping.smk  
-|
-├─  environment.yml
-├─  scripts
-│   ├── README.md
-│   ├── filtering <- custom scripts for variant filtering
-│   ├── common_garden <- scripts related to linear mixed models & phenotype data
-│   └── popgen <- analysis and plotting scripts for pop gen analyses
-|
-├── data
-│   ├── raw 		<- Original data dump
-│   ├── genome 		<- reference genome
-│   ├── interim  	<- intermediate files in read mapping and SNP calling
-│   └── processed	<- final vcfs for analysis
-|
-├── reports 		<- Generated analyses as HTML, PDF, or .txt.
-├── qc 			<- quality check output for raw data
-├── Snakefile
-└── config.yaml
+|  
+├─  environment.yml  
+├─  scripts  
+│   ├── README.md  
+│   ├── filtering       <- Custom scripts for variant filtering  
+|  
+├── data  
+│   ├── raw 		        <- Original data dump  
+│   ├── genome 		      <- Reference genome  
+│   ├── interim  	      <- Intermediate files in read mapping and SNP calling  
+│   └── processed	      <- Final vcfs for analysis  
+|  
+├── reports 		        <- Generated analyses as HTML, PDF, or .txt.  
+├── qc 			            <- Quality check output for raw data  
+├── Snakefile  
+└── config.yaml  
