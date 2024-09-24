@@ -1,6 +1,15 @@
 # (1) Evaluate quality of raw reads with fastqc
 # scripts/fastqc.sh
 
+rule fastqc:
+    input:
+        "/global/scratch/users/arphillips/raw/jgi_wgs/{sample}_R1_001.fastq.gz"
+    output:
+    params:
+    conda:
+    shell: 
+        "fastqc -o qc/fastqc -f fastq data/raw/trimmed/*.fastq.gz"
+
 # (2) Trim reads sequenced at UCD with fastp
 # Minimum length is 36 (-l 36)
 # Don't filter for quality (-Q)
@@ -12,7 +21,7 @@ rule fastp_trim:
     input:
         fastq = "/global/scratch/users/arphillips/raw/jgi_wgs/{sample}_R1_001.fastq.gz",
     output:
-        trim = "data/raw/trimmed/{sample}.trim_1.fastq.gz",
+        trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim_1.fastq.gz",
         report = "reports/fastp/{sample}.json"
     run:
         shell("fastp -w 2 \
@@ -28,11 +37,9 @@ rule bwa_prep:
         config["data"]["reference-genome"]
     output:
         index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.fai"
+    conda: "envs/bwa_map.yaml"
     shell:
-        """
-        ~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index {input}
-        gatk
-        """
+        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index {input}"
 
 
 # (3b) Align reads to the reference genome
@@ -40,13 +47,14 @@ rule bwa_prep:
 rule bwa_map:
     input:
         ref = config.ref,
-        index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.fai"
-        fastq = "/group/jrigrp10/andropogon_shortreads/{sample}.merge.R2.fastq.gz"
+        index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.fai",
+#        fastq = "/group/jrigrp10/andropogon_shortreads/{sample}.merge.R2.fastq.gz"
+        trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim_1.fastq.gz"
     output:
-        temp("data/interm/mapped_bam/{sample}.mapped.bam")
+        temp("/global/scratch/users/arphillips/data/interm/mapped_bam/{sample}.mapped.bam")
 #    log:
 #        "logs/bwa_mem/{sample}.log",
-    conda: "bwa_map.yaml"
+    conda: "envs/bwa_map.yaml"
     threads: 8
     shell:
         "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -t {threads} {input.ref} {input.r1} {input.r2} |"
@@ -55,11 +63,11 @@ rule bwa_map:
 # (4) Sort bams
 rule samtools_sort:
     input:
-        "data/interm/mapped_bam/{sample}.mapped.bam"
+        "/global/scratch/users/arphillips/data/interm/mapped_bam/{sample}.mapped.bam"
     output:
-        temp("data/interm/sorted_bam/{sample}.sorted.bam"),
+        temp("/global/scratch/users/arphillips/data/interm/sorted_bam/{sample}.sorted.bam"),
     params:
-        tmp = "/scratch/aphillip/sort_bam/{sample}"
+        tmp = "/global/scratch/users/arphillips/temp/sort_bam/{sample}"
     threads: 8
     run:
         shell("mkdir -p {params.tmp}")
@@ -69,12 +77,13 @@ rule samtools_sort:
 # (5) Add read groups
 rule add_rg:
     input:
-        "data/interm/sorted_bam/{sample}.sorted.bam"
+        "/global/scratch/users/arphillips/data/interm/sorted_bam/{sample}.sorted.bam"
     output:
-        bam = temp(touch("data/interm/addrg/{sample}.rg.bam"))
+        bam = temp(touch("/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bam"))
     params:
-        tmp = "/scratch/aphillip/addrg/{sample}",
+        tmp = "/global/scratch/users/arphillips/temp/addrg/{sample}",
         sample = "{sample}"
+    conda: "envs/gatk.yaml"
     run:
         shell("mkdir -p {params.tmp}")
         shell("gatk --java-options ""-Xmx4G"" AddOrReplaceReadGroups \
@@ -92,12 +101,12 @@ rule add_rg:
 # (6) Mark duplicates
 rule mark_dups:
     input:
-        "data/interm/addrg/{sample}.rg.bam"
+        "/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bam"
     output:
-        bam = "data/interm/mark_dups/{sample}.dedup.bam",
+        bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam",
         metrics = "qc/mark_dup/{sample}_metrics.txt"
     params:
-        tmp = "/scratch/aphillip/mark_dups/{sample}"
+        tmp = "/global/scratch/users/arphillips/temp/mark_dups/{sample}"
     run:
         # Create a scratch directory
         shell("mkdir -p {params.tmp}")
@@ -120,8 +129,7 @@ rule mark_dups:
 # tested with nr = 10000 and nw = 400, failed
 rule bamqc:
     input:
-        "data/interm/mark_dups/{bam}.dedup.bam"
-###        "data/interm/mark_dups/I{bam}.dedup.bam"
+        "/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam"
     output:
         "reports/bamqc/{bam}_stats/qualimapReport.html"
     params:
