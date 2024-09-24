@@ -5,7 +5,7 @@ Author: Alyssa Phillips
 Snakemake pipeline for variant calling in a large quaking aspen WGS dataset.
 Directory roughly follows a CookieCutter directory structure.
 
-├── README.md <- The top-level README.md for Andropogon or polyploidy enthusiasts that want to replicate these analyses.   
+├── README.md <- The top-level README.md for Andropogon or polyploidy enthusiasts that want to replicate these analyses.
 |
 ├── rules
 |   ├── calling.smk
@@ -13,7 +13,7 @@ Directory roughly follows a CookieCutter directory structure.
 |   ├── filtering.smk
 |   └── mapping.smk
 |
-├─  environment.yml 
+├─  environment.yml
 ├─  scripts
 │   ├── README.md
 │   ├── filtering <- custom scripts for variant filtering
@@ -29,4 +29,4 @@ Directory roughly follows a CookieCutter directory structure.
 ├── reports 		<- Generated analyses as HTML, PDF, or .txt.
 ├── qc 			<- quality check output for raw data
 ├── Snakefile
-└── config.yaml 
+└── config.yaml
