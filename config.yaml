@@ -26,104 +26,10 @@ data:
     known-variants: ""
 
 # =================================================================================================
-#     Pipeline Settings
-# =================================================================================================
-
-settings:
-
-  # Select whether to mark and remove duplicates after mapping, using picard/markduplicates
-  remove-duplicates: true
-
-  # Select whether to merge paired end reads into a single read while trimming.
-  # Only works with adapterremoval and fastp;
-  # cannot be used with cutadapt, skewer, or trimmomatic, as those do not support merging reads.
-  merge-paired-end-reads: false
-
-  # Select whether to recalibrate base frequencies after mapping, using gatk/baserecalibrator
-  recalibrate-base-qualities: false
-
-  # Select the tool used for read trimming.
-  # Valid values: "adapterremoval", "cutadapt", "fastp", "skewer", "trimmomatic"
-  trimming-tool: "trimmomatic"
-
-  # Select the tool used for read mapping.
-  # Valid values: "bwamem", "bowtie2"
-  mapping-tool: "bwamem"
-
-  # Select the tool to mark duplicates.
-  # Valid values: "picard", "dedup"
-  duplicates-tool: "picard"
-
-  # Select the tool used for SNP calling.
-  # Valid values: "haplotypecaller", "bcftools", "freebayes"
-  calling-tool: "haplotypecaller"
-
-  # Uncomment and point to a bed file with, e.g., captured regions if necessary,
-  # see https://gatkforums.broadinstitute.org/gatk/discussion/4133/when-should-i-use-l-to-pass-in-a-list-of-intervals
-  # restrict-regions: captured_regions.bed
-
-  # If regions are restricted, uncomment this to enlarge them by the given value
-  # in order to include flanking areas.
-  # region-padding: 100
-
-  # Set to true in order to apply machine learning based recalibration
-  # of quality scores instead of hard filtering.
-  vqsr: false
-
-  # Set to true in order to run snpeff annotations, which always requires the full SNP calling
-  # pipleline to run. Set to false instead if this is not required/desired, for example when
-  # using the workflow to only obtain quality control statistics.
-  snpeff: false
-
-  # Set to true in order to run mapDamage.
-  mapdamage: false
-
-  # Set to true in order to run DamageProfiler.
-  damageprofiler: false
-
-# =================================================================================================
 #     Tool Parameters
 # =================================================================================================
 
 params:
-
-  # ----------------------------------------------------------------------
-  #     adapterremoval
-  # ----------------------------------------------------------------------
-
-  # Used only if settings:trimming-tool == adapterremoval
-  # See adapterremoval manual: https://adapterremoval.readthedocs.io/en/latest/
-  # and https://adapterremoval.readthedocs.io/en/latest/manpage.html
-  adapterremoval:
-    threads: 4
-
-    # Params for single reads. Param `--gzip` is alreaday set internally.
-    se: ""
-
-    # Params for paired end reads. Param `--gzip` is alreaday set internally,
-    # as well as `--collapse` if settings:merge-paired-end-reads is set to true above.
-    pe: ""
-
-  # ----------------------------------------------------------------------
-  #     cutadapt
-  # ----------------------------------------------------------------------
-
-  # Used only if settings:trimming-tool == cutadapt
-  cutadapt:
-    threads: 4
-
-    # See cutadapt manual:
-    # https://cutadapt.readthedocs.io/en/stable/guide.html#adapter-types
-    # Set params for single end files end such as "-a AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC -q 20" here.
-    se: ""
-
-    # Set params for paired end files end such as
-    # adapters: "-a AGAGCACACGTCTGAACTCCAGTCAC -g AGATCGGAAGAGCACACGT -A AGAGCACACGTCTGAACTCCAGTCAC -G AGATCGGAAGAGCACACGT"
-    # others: "--minimum-length 1 -q 20"
-    # https://cutadapt.readthedocs.io/en/stable/guide.html
-    pe:
-      adapters: ""
-      others: ""
 
   # ----------------------------------------------------------------------
   #     fastp
@@ -132,10 +38,6 @@ params:
   # Used only if settings:trimming-tool == fastp
   fastp:
     threads: 4
-
-    # See fastp manual: https://github.com/OpenGene/fastp
-    se: ""
-    pe: ""
 
   # ----------------------------------------------------------------------
   #     trimmomatic
@@ -253,17 +155,6 @@ params:
     indels:
       "QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0"
 
-  # ----------------------------------------------------------------------
-  #     fastqc
-  # ----------------------------------------------------------------------
-
-  fastqc:
-    # Select input files for fastqc: either "samples" for the raw sequence input files,
-    # or "trimmed" for the fastq files resulting from the trimming step.
-    input: "samples"
-
-    # Additional parameters for fastqc
-    extra: ""
 
   # ----------------------------------------------------------------------
   #     qualimap

@@ -3,12 +3,22 @@
 
 rule fastqc:
     input:
-        "/global/scratch/users/arphillips/raw/jgi_wgs/{sample}_R1_001.fastq.gz"
+        "/global/scratch/users/arphillips/raw/jgi_wgs/{sample}.fastq.gz"
     output:
+        "/global/scratch/users/arphillips/qc/fastqc/{sample}/{sample}_fastqc.zip"
     params:
+        tmp = "/global/scratch/users/arphillips/tmp/fastqc/{sample}",
+        outdir = "/global/scratch/users/arphillips/qc/fastqc/{sample}"
     conda:
-    shell: 
-        "fastqc -o qc/fastqc -f fastq data/raw/trimmed/*.fastq.gz"
+        "envs/fastqc.yaml"
+   # threads: config["params"]["fastqc-threads"]
+   #  resources:
+    shell:
+        """
+        mkdir -p {params.tmp}
+        fastqc -o {params.outdir} -d {params.tmp} -f fastq {input}
+        rm -rf {params.tmp}
+        """
 
 # (2) Trim reads sequenced at UCD with fastp
 # Minimum length is 36 (-l 36)
@@ -19,22 +29,26 @@ rule fastqc:
 
 rule fastp_trim:
     input:
-        fastq = "/global/scratch/users/arphillips/raw/jgi_wgs/{sample}_R1_001.fastq.gz",
+        fastq = "/global/scratch/users/arphillips/raw/jgi_wgs/{sample}.fastq.gz",
     output:
-        trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim_1.fastq.gz",
-        report = "reports/fastp/{sample}.json"
-    run:
-        shell("fastp -w 2 \
+        trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz",
+        report = "/global/scratch/users/arphillips/reports/fastp/{sample}.json"
+    conda:
+        "envs/fastp.yaml"
+    shell:
+        """
+        fastp -w 2 \
         -l 36 -Q \
         -i {input.fastq} \
         -o {output.trim} \
         --trim_front1 9 --trim_front2 9 \
-        -j {output.report}")
+        -j {output.report}
+        """
 
 # (3a) Prepare reference file
 rule bwa_prep:
     input: 
-        config["data"]["reference-genome"]
+        config["data"]["reference"]["genome"]
     output:
         index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.fai"
     conda: "envs/bwa_map.yaml"
@@ -46,14 +60,11 @@ rule bwa_prep:
 # Paired-end reads in single file
 rule bwa_map:
     input:
-        ref = config.ref,
+        ref = config["data"]["reference"]["genome"],
         index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.fai",
-#        fastq = "/group/jrigrp10/andropogon_shortreads/{sample}.merge.R2.fastq.gz"
-        trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim_1.fastq.gz"
+        trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz"
     output:
         temp("/global/scratch/users/arphillips/data/interm/mapped_bam/{sample}.mapped.bam")
-#    log:
-#        "logs/bwa_mem/{sample}.log",
     conda: "envs/bwa_map.yaml"
     threads: 8
     shell:
@@ -68,11 +79,12 @@ rule samtools_sort:
         temp("/global/scratch/users/arphillips/data/interm/sorted_bam/{sample}.sorted.bam"),
     params:
         tmp = "/global/scratch/users/arphillips/temp/sort_bam/{sample}"
-    threads: 8
-    run:
-        shell("mkdir -p {params.tmp}")
-        shell("samtools sort -T {params.tmp} -@ {threads} {input} > {output}")
-        shell("rm -rf {params.tmp}")
+    conda: "envs/samtools.yaml"
+    #threads: 8
+    shell:
+        "mkdir -p {params.tmp}"
+        "samtools sort -T {params.tmp} -@ {threads} {input} > {output}"
+        "rm -rf {params.tmp}"
 
 # (5) Add read groups
 rule add_rg:
@@ -84,9 +96,10 @@ rule add_rg:
         tmp = "/global/scratch/users/arphillips/temp/addrg/{sample}",
         sample = "{sample}"
     conda: "envs/gatk.yaml"
-    run:
-        shell("mkdir -p {params.tmp}")
-        shell("gatk --java-options ""-Xmx4G"" AddOrReplaceReadGroups \
+    shell:
+        """
+        mkdir -p {params.tmp}
+        gatk --java-options ""-Xmx4G"" AddOrReplaceReadGroups \
         -I {input} \
         -O {output.bam} \
         -RGID 4 \
@@ -96,7 +109,8 @@ rule add_rg:
         -RGSM {params.sample} \
         --TMP_DIR {params.tmp} \
         --CREATE_INDEX true")
-        shell("rm -rf {params.tmp}")
+        rm -rf {params.tmp}
+        """
 
 # (6) Mark duplicates
 rule mark_dups:
@@ -107,40 +121,44 @@ rule mark_dups:
         metrics = "qc/mark_dup/{sample}_metrics.txt"
     params:
         tmp = "/global/scratch/users/arphillips/temp/mark_dups/{sample}"
-    run:
+    conda: "envs/gatk.yaml"
+    shell:
+        """
         # Create a scratch directory
-        shell("mkdir -p {params.tmp}")
+        mkdir -p {params.tmp}
         # Input bam file to output marked records. Assume bam file has been sorted. Direct to a temporary storage file (scratch).
-        shell("gatk --java-options ""-Xmx10G"" MarkDuplicates \
+        gatk --java-options ""-Xmx10G"" MarkDuplicates \
         -I {input} \
         -O {output.bam} \
         --METRICS_FILE {output.metrics} \
         --CREATE_INDEX true \
         -MAX_FILE_HANDLES 1000 \
         --ASSUME_SORT_ORDER coordinate \
-        --TMP_DIR {params.tmp}")
+        --TMP_DIR {params.tmp}
         # Remove scratch directory
-        shell("rm -rf {params.tmp}")
+        rm -rf {params.tmp}
+        """
 
 # (7) Assess alignment quality metrics with qualimap
 # nr is normally 100000 and -nt is normally 8, java mem size = 48
 # nw is normally 400
 # for higher cov, make nr 1000 and -nt 12, java mem size = 64
-# tested with nr = 10000 and nw = 400, failed
 rule bamqc:
     input:
         "/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam"
     output:
-        "reports/bamqc/{bam}_stats/qualimapReport.html"
+        "/global/scratch/users/arphillips/reports/bamqc/{bam}_stats/qualimapReport.html"
     params:
-        dir = "reports/bamqc/{bam}_stats"
-    run: 
-        shell("qualimap bamqc \
+        dir = "/global/scratch/users/arphillips/reports/bamqc/{bam}_stats"
+    shell:
+        """
+        qualimap bamqc \
         -bam {input} \
         -nt 12 \
         -nr 1000 \
         -nw 400 \
         -outdir {params.dir} \
-        -outformat HTML \
+        -outformat PDF \
         --skip-duplicated \
-        --java-mem-size=20G")
+        --java-mem-size=64G
+        """

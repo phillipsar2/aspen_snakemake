@@ -5,6 +5,10 @@ Author: Alyssa Phillips
 Snakemake pipeline for variant calling in a large quaking aspen WGS dataset.
 The directory roughly follows a CookieCutter directory structure.
 
+## Running the pipeline
+
+`snakemake --executor slurm --profile profiles/slurm/`
+
 ## Project organization
 <pre>
 ├── README.md  
