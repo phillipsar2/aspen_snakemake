@@ -26,6 +26,34 @@ data:
     known-variants: ""
 
 # =================================================================================================
+#    Snakemake settings
+# =================================================================================================
+
+max-jobs-per-second: 1
+max-status-checks-per-second: 10
+local-cores: 1
+latency-wait: 120
+
+# Additional settings used for our purposes
+use-conda: True
+jobs: 200
+keep-going: True
+rerun-incomplete: True
+printshellcmds: True
+
+
+# =================================================================================================
+#     Default Resources
+# =================================================================================================
+default-resources:
+  slurm_partition: "savio3_htc" 
+  slurm_account:  "arphillips"
+  runtime: 480
+  mem_mb: None
+  mem_mb_per_cpu: 5000
+
+
+# =================================================================================================
 #     Tool Parameters
 # =================================================================================================
 
