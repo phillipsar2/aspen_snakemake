@@ -44,3 +44,7 @@ The directory roughly follows a CookieCutter directory structure.
 * Trim reads with fastp and re-evaluate quality. Reads are trimmed via sliding windows (4 bp windows, min quality of 15) and automated detection of adapters.
 
 2. Mapping
+* Map reads to the reference with bwa-mem2
+* Sort, add read groups, and deduplicate BAM files with samtools and GATK.
+* Assess mapping quality with qualimap's bamqc
+* Likely need to merge bam files from multiple sequencing runs of the same genotype
