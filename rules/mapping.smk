@@ -5,18 +5,20 @@ rule fastqc:
     input:
         "/global/scratch/users/arphillips/raw/jgi_wgs/{sample}.fastq.gz"
     output:
-        "/global/scratch/users/arphillips/qc/fastqc/{sample}/{sample}_fastqc.zip"
+        "/global/scratch/users/arphillips/qc/fastqc/{sample}_fastqc.zip"
     params:
         tmp = "/global/scratch/users/arphillips/tmp/fastqc/{sample}",
-        outdir = "/global/scratch/users/arphillips/qc/fastqc/{sample}"
+        outdir = "/global/scratch/users/arphillips/qc/fastqc"
     conda:
-        "envs/fastqc.yaml"
+        "/global/home/users/arphillips/aspen/aspen_snakemake/envs/fastqc.yaml"
+    resources:
+        cpus_per_task=2
    # threads: config["params"]["fastqc-threads"]
    #  resources:
     shell:
         """
         mkdir -p {params.tmp}
-        fastqc -o {params.outdir} -d {params.tmp} -f fastq {input}
+        fastqc -o {params.outdir} -t {resources.cpus_per_task} -d {params.tmp} -f fastq {input}
         rm -rf {params.tmp}
         """
 
@@ -25,24 +27,21 @@ rule fastqc:
 # Don't filter for quality (-Q)
 # Adapter trimming is enabled by default -- don't need to specify adapter seq
 # Default detects and trims polyG tails for NovaSeq data
-# Trim first 9 bp on each read (--trim_front1 9 --trim_front2 9)
-
+# --cut_front is sliding window trimming from 5' ot 3'
 rule fastp_trim:
     input:
         fastq = "/global/scratch/users/arphillips/raw/jgi_wgs/{sample}.fastq.gz",
     output:
-        trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz",
-        report = "/global/scratch/users/arphillips/reports/fastp/{sample}.json"
+        trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz"
     conda:
-        "envs/fastp.yaml"
+        "/global/home/users/arphillips/aspen/aspen_snakemake/envs/fastp.yaml"
     shell:
         """
         fastp -w 2 \
         -l 36 -Q \
         -i {input.fastq} \
         -o {output.trim} \
-        --trim_front1 9 --trim_front2 9 \
-        -j {output.report}
+        --cut_front --cut_front_window_size 4 --cut_front_mean_quality 15 
         """
 
 # (3a) Prepare reference file
@@ -51,9 +50,12 @@ rule bwa_prep:
         config["data"]["reference"]["genome"]
     output:
         index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.fai"
-    conda: "envs/bwa_map.yaml"
+    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/bwa-mem2.yaml"
+    resources:
+        mem_mb=80000
+    threads: 56
     shell:
-        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index {input}"
+        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index -a ert -t {threads} {input}"
 
 
 # (3b) Align reads to the reference genome
@@ -68,7 +70,7 @@ rule bwa_map:
     conda: "envs/bwa_map.yaml"
     threads: 8
     shell:
-        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -t {threads} {input.ref} {input.r1} {input.r2} |"
+        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -Y -K 100000000 -t {threads} {input.ref} {input.trim} |"
         "samtools view -Sb > {output}"
 
 # (4) Sort bams

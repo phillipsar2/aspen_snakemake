@@ -7,7 +7,7 @@ The directory roughly follows a CookieCutter directory structure.
 
 ## Running the pipeline
 
-`snakemake --executor slurm --profile profiles/slurm/`
+`snakemake --executor slurm --profile profiles/ --use-conda`
 
 ## Project organization
 <pre>
@@ -25,13 +25,22 @@ The directory roughly follows a CookieCutter directory structure.
 │    └── filtering       <- Custom scripts for variant filtering  
 |  
 ├── data  
-│    ├── raw 		        <- Original data dump  
-│    ├── genome 		      <- Reference genome  
-│    ├── interim  	      <- Intermediate files in read mapping and SNP calling  
-│    └── processed	      <- Final vcfs for analysis  
+│    ├── raw 		 <- Original data dump  
+│    ├── trimmed         <- Trimmed fastqs
+│    ├── genome 	 <- Reference genome  
+│    ├── interim  	 <- Intermediate files in read mapping and SNP calling  
+│    └── processed	 <- Final vcfs for analysis  
 |  
-├── reports 		        <- Generated analyses as HTML, PDF, or .txt.  
-├── qc 			            <- Quality check output for raw data  
+├── reports 		 <- Generated analyses as HTML, PDF, or .txt.  
+├── qc 			 <- Quality check output for raw data  
 ├── Snakefile  
 └── config.yaml  
 </pre>
+
+## Workflow overview
+
+1. Pre-processing of reads
+* Assess read quality with fastqc
+* Trim reads with fastp and re-evaluate quality. Reads are trimmed via sliding windows (4 bp windows, min quality of 15) and automated detection of adapters.
+
+2. Mapping

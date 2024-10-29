@@ -36,7 +36,7 @@ latency-wait: 120
 
 # Additional settings used for our purposes
 use-conda: True
-jobs: 200
+jobs: 10
 keep-going: True
 rerun-incomplete: True
 printshellcmds: True
@@ -47,11 +47,10 @@ printshellcmds: True
 # =================================================================================================
 default-resources:
   slurm_partition: "savio3_htc" 
-  slurm_account:  "arphillips"
-  runtime: 480
-  mem_mb: None
-  mem_mb_per_cpu: 5000
-
+  slurm_account:  "fc_moilab"
+  runtime: 2880
+  nodes: 1
+  cpus_per_task: 1
 
 # =================================================================================================
 #     Tool Parameters
@@ -59,6 +58,12 @@ default-resources:
 
 params:
 
+  # ----------------------------------------------------------------------
+  #     fastp
+  # ----------------------------------------------------------------------
+  fastqc:
+     threads: 4
+        
   # ----------------------------------------------------------------------
   #     fastp
   # ----------------------------------------------------------------------
