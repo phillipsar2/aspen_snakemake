@@ -45,17 +45,15 @@ rule fastp_trim:
         """
 
 # (3a) Prepare reference file
+# 9.6 GB per core available (core == threads)
 rule bwa_prep:
     input: 
         config["data"]["reference"]["genome"]
     output:
-        index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.fai"
+        index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.gz.0123"
     conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/bwa-mem2.yaml"
-    resources:
-        mem_mb=80000
-    threads: 56
     shell:
-        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index -a ert -t {threads} {input}"
+        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index {input}"
 
 
 # (3b) Align reads to the reference genome
@@ -63,14 +61,14 @@ rule bwa_prep:
 rule bwa_map:
     input:
         ref = config["data"]["reference"]["genome"],
-        index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.fai",
+        index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.gz.0123",
         trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz"
     output:
         temp("/global/scratch/users/arphillips/data/interm/mapped_bam/{sample}.mapped.bam")
-    conda: "envs/bwa_map.yaml"
+    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/envs/bwa_map.yaml"
     threads: 8
     shell:
-        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -Y -K 100000000 -t {threads} {input.ref} {input.trim} |"
+        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -t 8 {input.ref} {input.trim} |"
         "samtools view -Sb > {output}"
 
 # (4) Sort bams
@@ -81,11 +79,11 @@ rule samtools_sort:
         temp("/global/scratch/users/arphillips/data/interm/sorted_bam/{sample}.sorted.bam"),
     params:
         tmp = "/global/scratch/users/arphillips/temp/sort_bam/{sample}"
-    conda: "envs/samtools.yaml"
+    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/envs/samtools.yaml"
     #threads: 8
     shell:
         "mkdir -p {params.tmp}"
-        "samtools sort -T {params.tmp} -@ {threads} {input} > {output}"
+        "samtools sort -T {params.tmp} -@ 8 {input} > {output}"
         "rm -rf {params.tmp}"
 
 # (5) Add read groups
@@ -97,7 +95,7 @@ rule add_rg:
     params:
         tmp = "/global/scratch/users/arphillips/temp/addrg/{sample}",
         sample = "{sample}"
-    conda: "envs/gatk.yaml"
+    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/envs/gatk.yaml"
     shell:
         """
         mkdir -p {params.tmp}
@@ -120,10 +118,10 @@ rule mark_dups:
         "/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bam"
     output:
         bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam",
-        metrics = "qc/mark_dup/{sample}_metrics.txt"
+        metrics = "/global/scratch/users/arphillips/qc/mark_dup/{sample}_metrics.txt"
     params:
         tmp = "/global/scratch/users/arphillips/temp/mark_dups/{sample}"
-    conda: "envs/gatk.yaml"
+    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/envs/gatk.yaml"
     shell:
         """
         # Create a scratch directory
