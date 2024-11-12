@@ -89,28 +89,41 @@ set-resources:
     mem_mb: 80000
 
   # ----------------------------------------------------------------------
-  #     bowtie2
+  #     bwa_map
   # ----------------------------------------------------------------------
 
-  # Used only if settings:mapping-tool == bowtie2
-  bowtie2:
-    threads: 12
+  # Just under three days to map
+  bwa_map:
+    mem_mb: 38000
+    threads: 4
+    runtime: 4319
 
   # ----------------------------------------------------------------------
-  #     picard
+  #     samtools_sort
   # ----------------------------------------------------------------------
 
-  # Used only if settings:duplicates-tool == picard
-  picard:
-    MarkDuplicates: "REMOVE_DUPLICATES=true"
+  samtools_sort:
+    mem_mb: 38000
+    threads: 4
+    runtime: 1440
 
   # ----------------------------------------------------------------------
-  #     dedup
+  #     mark_dups
   # ----------------------------------------------------------------------
 
-  # Used only if settings:duplicates-tool == dedup
-  dedup:
-    extra: "-m"
+  mark_dups:
+    mem_mb: 32000
+    threads: 4
+    runtime: 1440
+
+  # ----------------------------------------------------------------------
+  #     bamqc
+  # ----------------------------------------------------------------------
+
+  bampqc:
+    mem_mb: 24000
+    threads: 3
+    runtime: 1440
 
   # ----------------------------------------------------------------------
   #     bcftools
