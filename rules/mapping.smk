@@ -65,10 +65,9 @@ rule bwa_map:
         trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz"
     output:
         temp("/global/scratch/users/arphillips/data/interm/mapped_bam/{sample}.mapped.bam")
-    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/envs/bwa_map.yaml"
-    threads: 8
+    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/bwa_map.yaml"
     shell:
-        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -t 8 {input.ref} {input.trim} |"
+        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -t 4 {input.ref} {input.trim} |"
         "samtools view -Sb > {output}"
 
 # (4) Sort bams
@@ -79,11 +78,10 @@ rule samtools_sort:
         temp("/global/scratch/users/arphillips/data/interm/sorted_bam/{sample}.sorted.bam"),
     params:
         tmp = "/global/scratch/users/arphillips/temp/sort_bam/{sample}"
-    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/envs/samtools.yaml"
-    #threads: 8
+    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/samtools.yaml"
     shell:
         "mkdir -p {params.tmp}"
-        "samtools sort -T {params.tmp} -@ 8 {input} > {output}"
+        "samtools sort -T {params.tmp} -@ 4 {input} > {output}"
         "rm -rf {params.tmp}"
 
 # (5) Add read groups
@@ -95,14 +93,14 @@ rule add_rg:
     params:
         tmp = "/global/scratch/users/arphillips/temp/addrg/{sample}",
         sample = "{sample}"
-    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/envs/gatk.yaml"
+    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/gatk.yaml"
     shell:
         """
         mkdir -p {params.tmp}
         gatk --java-options ""-Xmx4G"" AddOrReplaceReadGroups \
         -I {input} \
         -O {output.bam} \
-        -RGID 4 \
+        -RGID $RANDOM \
         -RGLB lib1 \
         -RGPL illumina \
         -RGPU unit1 \
@@ -121,7 +119,7 @@ rule mark_dups:
         metrics = "/global/scratch/users/arphillips/qc/mark_dup/{sample}_metrics.txt"
     params:
         tmp = "/global/scratch/users/arphillips/temp/mark_dups/{sample}"
-    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/envs/gatk.yaml"
+    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/gatk.yaml"
     shell:
         """
         # Create a scratch directory
@@ -150,6 +148,7 @@ rule bamqc:
         "/global/scratch/users/arphillips/reports/bamqc/{bam}_stats/qualimapReport.html"
     params:
         dir = "/global/scratch/users/arphillips/reports/bamqc/{bam}_stats"
+    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/qualimap.yaml"
     shell:
         """
         qualimap bamqc \
@@ -158,7 +157,7 @@ rule bamqc:
         -nr 1000 \
         -nw 400 \
         -outdir {params.dir} \
-        -outformat PDF \
+        -outformat HTML \
         --skip-duplicated \
-        --java-mem-size=64G
+        --java-mem-size=24G
         """
