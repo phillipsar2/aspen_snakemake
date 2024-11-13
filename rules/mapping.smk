@@ -80,9 +80,11 @@ rule samtools_sort:
         tmp = "/global/scratch/users/arphillips/temp/sort_bam/{sample}"
     conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/samtools.yaml"
     shell:
-        "mkdir -p {params.tmp}"
-        "samtools sort -T {params.tmp} -@ 4 {input} > {output}"
-        "rm -rf {params.tmp}"
+        """ 
+        mkdir -p {params.tmp}
+        samtools sort -T {params.tmp} -@ 4 {input} > {output}
+        rm -rf {params.tmp}
+        """
 
 # (5) Add read groups
 rule add_rg:
@@ -143,11 +145,11 @@ rule mark_dups:
 # for higher cov, make nr 1000 and -nt 12, java mem size = 64
 rule bamqc:
     input:
-        "/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam"
+        "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam"
     output:
-        "/global/scratch/users/arphillips/reports/bamqc/{bam}_stats/qualimapReport.html"
+        "/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/qualimapReport.html"
     params:
-        dir = "/global/scratch/users/arphillips/reports/bamqc/{bam}_stats"
+        dir = "/global/scratch/users/arphillips/reports/bamqc/{sample}_stats"
     conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/qualimap.yaml"
     shell:
         """

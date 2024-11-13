@@ -9,7 +9,8 @@ rule all:
     input:
         #fastqc = expand("/global/scratch/users/arphillips/qc/fastqc/{sample}_fastqc.zip", sample = SAMPLE),
         #fastp = expand("/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz" , sample = SAMPLE),
-        bwa_prep = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.gz.0123"
+        #bwa_prep = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.gz.0123"
+        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/qualimapReport.html", sample = SAMPLE)
 
 # =================================================================================================
 #     Rule Modules
