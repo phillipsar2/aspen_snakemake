@@ -32,7 +32,7 @@ rule fastp_trim:
     input:
         fastq = "/global/scratch/users/arphillips/raw/jgi_wgs/{sample}.fastq.gz",
     output:
-        trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz"
+        trim = temp("/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz")
     conda:
         "/global/home/users/arphillips/aspen/aspen_snakemake/envs/fastp.yaml"
     benchmark:
@@ -52,7 +52,7 @@ rule bwa_prep:
     input: 
         config["data"]["reference"]["genome"]
     output:
-        index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.gz.0123"
+        index = "/global/scratch/projects/fc_moilab/PROJECTS/aspen/genome/mex_genome/genome.1MX.fasta.gz.0123"
     conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/bwa-mem2.yaml"
     shell:
         "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index {input}"
@@ -63,7 +63,7 @@ rule bwa_prep:
 rule bwa_map:
     input:
         ref = config["data"]["reference"]["genome"],
-        index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.gz.0123",
+        index = "/global/scratch/projects/fc_moilab/PROJECTS/aspen/genome/mex_genome/genome.1MX.fasta.gz.0123",
         trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz"
     output:
         temp("/global/scratch/users/arphillips/data/interm/mapped_bam/{sample}.mapped.bam")
@@ -71,7 +71,7 @@ rule bwa_map:
     benchmark:
         "/global/scratch/users/arphillips/benchmarks/{sample}.bwa.benchmark.txt"
     shell:
-        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -t 2 {input.ref} {input.trim} |"
+        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -p -t 4 {input.ref} {input.trim} |"
         "samtools view -Sb > {output}"
 
 # (4) Sort bams

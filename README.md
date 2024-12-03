@@ -34,7 +34,7 @@ The directory roughly follows a CookieCutter directory structure.
 ├── reports 		 <- Generated analyses as HTML, PDF, or .txt.  
 ├── qc 			 <- Quality check output for raw data  
 ├── Snakefile  
-└── config.yaml  
+└── profiles/config.yaml	<- Specifies job resources, snakemake setting  
 </pre>
 
 ## Workflow overview
@@ -48,3 +48,6 @@ The directory roughly follows a CookieCutter directory structure.
 * Sort, add read groups, and deduplicate BAM files with samtools and GATK.
 * Assess mapping quality with qualimap's bamqc
 * Likely need to merge bam files from multiple sequencing runs of the same genotype
+
+3. Determining sex and ploidy
+* The TOZ19 sex locus region was identified by mapping the *P. trichocarpa* genomic sequence to the reference with minimap2 (the reference is Male)

@@ -2,9 +2,9 @@ configfile: "profiles/config.yaml"
 
 from random import randint
 
-#SAMPLE = glob_wildcards("/global/scratch/users/arphillips/raw/jgi_wgs/{sample}.fastq.gz").sample
+SAMPLE = glob_wildcards("/global/scratch/users/arphillips/raw/jgi_wgs/{sample}.fastq.gz").sample
 #SAMPLE = ["53044.3.564626.CTAGGGCCGC-TGGCTCTGTT", "52882.3.482409.CGCATGAT-CGCATGAT", "53044.4.564661.GATTTGGACT-GTGATGGCTC"]
-SAMPLE = ["52896.1.487686.GATGCACTAT-GATGCACTGT", "52865.3.474771.TGCTTGGT-TGCTTGGT", "52864.3.474633.AGCAAGCA-AGCAAGCA"]
+#SAMPLE = ["52896.1.487686.GATGCACTAT-GATGCACTGT", "52865.3.474771.TGCTTGGT-TGCTTGGT", "52864.3.474633.AGCAAGCA-AGCAAGCA"]
 #print(SAMPLE)
 
 # =================================================================================================
