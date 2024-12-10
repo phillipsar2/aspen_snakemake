@@ -35,8 +35,8 @@ rule fastp_trim:
         trim = temp("/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz")
     conda:
         "/global/home/users/arphillips/aspen/aspen_snakemake/envs/fastp.yaml"
-    benchmark:
-        "/global/scratch/users/arphillips/benchmarks/{sample}.trim.benchmark.txt"
+#    benchmark:
+#        "/global/scratch/users/arphillips/benchmarks/{sample}.trim.benchmark.txt"
     shell:
         """
         fastp -w 2 \
@@ -68,8 +68,8 @@ rule bwa_map:
     output:
         temp("/global/scratch/users/arphillips/data/interm/mapped_bam/{sample}.mapped.bam")
     conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/bwa_map.yaml"
-    benchmark:
-        "/global/scratch/users/arphillips/benchmarks/{sample}.bwa.benchmark.txt"
+#    benchmark:
+#        "/global/scratch/users/arphillips/benchmarks/{sample}.bwa.benchmark.txt"
     shell:
         "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -p -t 4 {input.ref} {input.trim} |"
         "samtools view -Sb > {output}"
@@ -83,8 +83,8 @@ rule samtools_sort:
     params:
         tmp = "/global/scratch/users/arphillips/temp/sort_bam/{sample}"
     conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/samtools.yaml"
-    benchmark:
-        "/global/scratch/users/arphillips/benchmarks/{sample}.sort.benchmark.txt"
+#    benchmark:
+#        "/global/scratch/users/arphillips/benchmarks/{sample}.sort.benchmark.txt"
     shell:
         """ 
         mkdir -p {params.tmp}
@@ -103,8 +103,8 @@ rule add_rg:
         sample = "{sample}",
         rg = randint(1,1000)
     conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/gatk.yaml"
-    benchmark:
-        "/global/scratch/users/arphillips/benchmarks/{sample}.rg.benchmark.txt"
+#    benchmark:
+#        "/global/scratch/users/arphillips/benchmarks/{sample}.rg.benchmark.txt"
     shell:
         """
         mkdir -p {params.tmp}
@@ -126,13 +126,12 @@ rule mark_dups:
     input:
         "/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bam"
     output:
-        bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam",
-        metrics = "/global/scratch/users/arphillips/qc/mark_dup/{sample}_metrics.txt"
+        bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam"
     params:
         tmp = "/global/scratch/users/arphillips/temp/mark_dups/{sample}"
     conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/gatk.yaml"
-    benchmark:
-        "/global/scratch/users/arphillips/benchmarks/{sample}.dups.benchmark.txt"
+#    benchmark:
+#        "/global/scratch/users/arphillips/benchmarks/{sample}.dups.benchmark.txt"
     shell:
         """
         # Create a scratch directory
@@ -141,7 +140,6 @@ rule mark_dups:
         gatk --java-options ""-Xmx10G"" MarkDuplicates \
         -I {input} \
         -O {output.bam} \
-        --METRICS_FILE {output.metrics} \
         --CREATE_INDEX true \
         -MAX_FILE_HANDLES 1000 \
         --ASSUME_SORT_ORDER coordinate \
@@ -162,8 +160,8 @@ rule bamqc:
     params:
         dir = "/global/scratch/users/arphillips/reports/bamqc/{sample}_stats"
     conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/qualimap.yaml"
-    benchmark:
-        "/global/scratch/users/arphillips/benchmarks/{sample}.bamqc.benchmark.txt"
+#    benchmark:
+#        "/global/scratch/users/arphillips/benchmarks/{sample}.bamqc.benchmark.txt"
     shell:
         """
         qualimap bamqc \
@@ -176,3 +174,18 @@ rule bamqc:
         --skip-duplicated \
         --java-mem-size=24G
         """
+
+# (8) Assess DNA damage with mapDamage
+rule mapdamage:
+    input:
+        bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam",
+        ref = config["data"]["reference"]["genome"]
+    output:
+        "/global/scratch/users/arphillips/reports/mapdamage/{bam}/5pCtoT_freq.txt"
+    params:
+        outdir = "/global/scratch/users/arphillips/reports/mapdamage/{bam}"
+    benchmark:
+        "/global/scratch/users/arphillips/benchmarks/{bam}.damage.benchmark.txt"
+    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/mapdamage-linux.yaml" 
+    shell:
+         "mapDamage -i {input.bam} -r {input.ref} -d {params.outdir}"

@@ -15,9 +15,9 @@ The directory roughly follows a CookieCutter directory structure.
 |  
 ├── rules  
 |    ├── calling.smk  
-|    ├── determine_ploidy.smk  
+|    ├── ploidy_sex.smk  <- rules to determine ploidy and sex
 |    ├── filtering.smk  
-|    └── mapping.smk  
+|    └── mapping.smk	 <- rules for aligning raw data to the reference  	
 |  
 ├─  environment.yml  
 ├─  scripts  
@@ -28,7 +28,8 @@ The directory roughly follows a CookieCutter directory structure.
 │    ├── raw 		 <- Original data dump  
 │    ├── trimmed         <- Trimmed fastqs
 │    ├── genome 	 <- Reference genome  
-│    ├── interim  	 <- Intermediate files in read mapping and SNP calling  
+│    ├── interim  	 <- Intermediate files in read mapping and SNP calling
+|    ├── toz19		 <- Files with for determining sex of samples  
 │    └── processed	 <- Final vcfs for analysis  
 |  
 ├── reports 		 <- Generated analyses as HTML, PDF, or .txt.  
@@ -49,5 +50,6 @@ The directory roughly follows a CookieCutter directory structure.
 * Assess mapping quality with qualimap's bamqc
 * Likely need to merge bam files from multiple sequencing runs of the same genotype
 
-3. Determining sex and ploidy
+3. Determining sex
 * The TOZ19 sex locus region was identified by mapping the *P. trichocarpa* genomic sequence to the reference with minimap2 (the reference is Male)
+* Samtools depth is used to extract the per-bp coverage of the TOZ19 region and then mean coverage of the region is calculated.

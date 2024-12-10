@@ -12,18 +12,10 @@ data:
 
   reference:
 
-    # Name of the reference genome. This has to be a valid snpeff database genome name.
-    name: ""
-
     # Path to the reference genome, using the file ideally as it is provided by the GATK bundle.
     # Path needs to be absolute! No relative path (e.g., `../ref`)!
     genome: "/global/scratch/projects/fc_moilab/PROJECTS/aspen/genome/mex_genome/genome.1MX.fasta.gz"
 
-    # Path to any database of known variants (in vcf or vcf.gz format),
-    # ideally as it is provided by the GATK bundle.
-    # If no such file is available, use an empty list or string instead.
-    # Path needs to be absolute! No relative path (e.g., `../var`)!
-    known-variants: ""
 
 # =================================================================================================
 #    Snakemake settings
@@ -85,12 +77,13 @@ set-resources:
   # ----------------------------------------------------------------------
 
   # Just under three days to map
+  # savio2_htc is 6.4 GB per core
   bwa_map:
     threads: 4
-    runtime: 4200
-    mem_mb: 19200 
-    slurm_partition: "savio3_htc"
-    #    qos: "savio_long"
+    runtime: 8640
+    mem_mb: 25600
+    slurm_partition: "savio2_htc"
+    #  qos: "savio_long"
     
 
   # ----------------------------------------------------------------------
@@ -121,65 +114,17 @@ set-resources:
     runtime: 120
 
   # ----------------------------------------------------------------------
-  #     bcftools
+  #     mapDamage
   # ----------------------------------------------------------------------
 
-  # Used only if settings:calling-tool == bcftools
-  bcftools:
-    mpileup: "--max-depth 10000"
-    call: ""
-    threads: 6
-    # concat: ""
-
-  # ----------------------------------------------------------------------
-  #     freebayes
-  # ----------------------------------------------------------------------
-
-  # Used only if settings:calling-tool == freebayes
-  freebayes:
-    extra: ""
-    chunksize: 100000
-    threads: 4
-    compress-threads: 2
+  mapdamage:
+    mem_mb: 24000
+    threads: 3
+    runtime: 120
 
   # ----------------------------------------------------------------------
   #     gatk
   # ----------------------------------------------------------------------
-
-  gatk:
-    # Used only if settings:recalibrate-base-qualities == true
-    BaseRecalibrator: ""
-
-    # Used only if settings:calling-tool == haplotypecaller
-    HaplotypeCaller: ""
-    HaplotypeCaller-threads: 2
-    GenotypeGVCFs: ""
-
-    # Used only if settings:vqsr == true
-    VariantRecalibrator: ""
-
-  # ----------------------------------------------------------------------
-  #     gatk / variantfiltration
-  # ----------------------------------------------------------------------
-
-  # Used only if settings:vqsr == false
-  variantfiltration-hard:
-    # Hard filtering as outlined in GATK docs
-    # (https://gatkforums.broadinstitute.org/gatk/discussion/2806/howto-apply-hard-filters-to-a-call-set)
-    snvs:
-      "QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0"
-    indels:
-      "QD < 2.0 || FS > 200.0 || ReadPosRankSum < -20.0"
-
-
-  # ----------------------------------------------------------------------
-  #     qualimap
-  # ----------------------------------------------------------------------
-
-  qualimap:
-    # Additional parameters for qualimap
-    extra: ""
-    threads: 2
 
   # ----------------------------------------------------------------------
   #     snpeff
