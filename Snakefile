@@ -20,8 +20,8 @@ rule all:
         #bwa_prep = "/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.gz.0123"
 #        bam = expand("/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam", sample = SAMPLE),
 #        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/qualimapReport.html", sample = SAMPLE)
-#        mapdamage = expand("/global/scratch/users/arphillips/reports/mapdamage/{bams}/5pCtoT_freq.txt", bams = TEST)
-        toz19 = expand("/global/scratch/users/arphillips/data/toz19/{bam}.toz19.cov.txt", bam = BAM)
+        mapdamage = expand("/global/scratch/users/arphillips/reports/mapdamage/{bams}/5pCtoT_freq.txt", bams = TEST)
+#        toz19 = expand("/global/scratch/users/arphillips/data/toz19/{bam}.toz19.cov.txt", bam = BAM)
 
 # =================================================================================================
 #     Rule Modules
