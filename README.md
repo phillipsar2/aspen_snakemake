@@ -29,7 +29,7 @@ The directory roughly follows a CookieCutter directory structure.
 │    ├── trimmed         <- Trimmed fastqs
 │    ├── genome 	 <- Reference genome  
 │    ├── interim  	 <- Intermediate files in read mapping and SNP calling
-|    ├── toz19		 <- Files with for determining sex of samples  
+|    ├── ref/toz19		 <- Files with for determining sex of samples  
 │    └── processed	 <- Final vcfs for analysis  
 |  
 ├── reports 		 <- Generated analyses as HTML, PDF, or .txt.  
