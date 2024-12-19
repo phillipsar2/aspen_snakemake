@@ -52,4 +52,5 @@ The directory roughly follows a CookieCutter directory structure.
 
 3. Determining sex
 * The TOZ19 sex locus region was identified by mapping the *P. trichocarpa* genomic sequence to the reference with minimap2 (the reference is Male)
+* The sex-linked region was identified by mapping the *P. tremuloides* concensus sequence from Pakull et al. (2014) to the reference with minimap2 and blastn using the scripts `scripts/blastn_TOZ19.sh` and  `scripts/minimap_TOZ19.sh`
 * Samtools depth is used to extract the per-bp coverage of the TOZ19 region and then mean coverage of the region is calculated.

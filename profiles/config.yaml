@@ -80,9 +80,9 @@ set-resources:
   # savio2_htc is 6.4 GB per core
   bwa_map:
     threads: 4
-    runtime: 8640
+    runtime: 4320
     mem_mb: 25600
-    slurm_partition: "savio2_htc"
+    slurm_partition: "savio3_htc"
     #  qos: "savio_long"
     
 

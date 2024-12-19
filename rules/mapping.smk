@@ -74,7 +74,7 @@ rule bwa_map:
 #    benchmark:
 #        "/global/scratch/users/arphillips/benchmarks/{sample}.bwa.benchmark.txt"
     shell:
-        "~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -p -t 4 {input.ref} {input.trim} |"
+        "/global/scratch/users/arphillips/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -p -t 4 {input.ref} {input.trim} |"
         "samtools view -Sb > {output}"
 
 # (4) Sort bams
@@ -155,11 +155,12 @@ rule mark_dups:
 # nr is normally 100000 and -nt is normally 8, java mem size = 48
 # nw is normally 400
 # for higher cov, make nr 1000 and -nt 12, java mem size = 64
+# then remove all the excess files we don't need
 rule bamqc:
     input:
         "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam"
     output:
-        "/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/qualimapReport.html"
+        "/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt"
     params:
         dir = "/global/scratch/users/arphillips/reports/bamqc/{sample}_stats"
     conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/qualimap.yaml"
@@ -176,6 +177,7 @@ rule bamqc:
         -outformat HTML \
         --skip-duplicated \
         --java-mem-size=24G
+        rm -r {params.dir}/css  {params.dir}/qualimapReport.html {params.dir}/images_qualimapReport  {params.dir}raw_data_qualimapReport
         """
 
 # (8) Assess DNA damage with mapDamage

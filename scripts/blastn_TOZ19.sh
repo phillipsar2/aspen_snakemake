@@ -1,6 +1,6 @@
 #!/bin/sh
 #SBATCH --job-name=blasnt
-#SBATCH --account=ac_moilab
+#SBATCH --account=fc_mel
 #SBATCH --partition=savio3_htc
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
@@ -13,13 +13,11 @@ module load bio/blast-plus/2.13.0-gcc-11.4.0
 
 # Align TOZ19 ref to reference genome
 
-gz="/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta.gz"
-ref="/global/scratch/projects/fc_moilab/projects/aspen/genome/mex_genome/genome.1MX.fasta"
-toz="ref/TOZ19.fasta"
-db="ref/mex_genome_db"
-out="ref/TOZ19_blastn.txt"
-
-gunzip -c $gz > $ref
+ref="/global/scratch/projects/fc_moilab/PROJECTS/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_release/Populus_tremuloi
+des_var_CAM1604-4/sequences/Populus_tremuloides_var_CAM1604-4_HAP1.mainGenome.fasta"
+toz="ref/toz19_ref/Potri.019G047300.fasta"
+db="ref/CAM1604/CAM1604_db"
+out="ref/CAM1604/TOZ19_blastn.txt"
 
 # Create a database of your reference contigs to blast against
 makeblastdb -in $ref -out $db -dbtype nucl -title "TOZ19" -parse_seqids
