@@ -10,7 +10,7 @@ rule fastqc:
         tmp = "/global/scratch/users/arphillips/tmp/fastqc/{sample}",
         outdir = "/global/scratch/users/arphillips/qc/fastqc"
     conda:
-        "/global/home/users/arphillips/aspen/aspen_snakemake/envs/fastqc.yaml"
+        "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/fastqc.yaml"
     resources:
         cpus_per_task=2
    # threads: config["params"]["fastqc-threads"]
@@ -34,7 +34,7 @@ rule fastp_trim:
     output:
         trim = temp("/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz")
     conda:
-        "/global/home/users/arphillips/aspen/aspen_snakemake/envs/fastp.yaml"
+        "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/fastp.yaml"
 #    benchmark:
 #        "/global/scratch/users/arphillips/benchmarks/{sample}.trim.benchmark.txt"
     shell:
@@ -53,10 +53,10 @@ rule bwa_prep:
         config["data"]["reference"]["genome"]
     output:
         index = "/global/scratch/projects/fc_moilab/PROJECTS/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/Populus_tremuloides_var_CAM1604-4_HAP1.mainGenome.fasta.0123"
-    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/bwa-mem2.yaml"
+    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/bwa-mem2.yaml"
     shell:
         """
-        ~/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index {input}
+        /global/home/users/arphillips/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index {input}
         samtools faidx {input}
         gatk CreateSequenceDictionary -R {input}
         """
@@ -70,7 +70,7 @@ rule bwa_map:
         trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz"
     output:
         temp("/global/scratch/users/arphillips/data/interm/mapped_bam/{sample}.mapped.bam")
-    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/bwa_map.yaml"
+    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/bwa_map.yaml"
 #    benchmark:
 #        "/global/scratch/users/arphillips/benchmarks/{sample}.bwa.benchmark.txt"
     shell:
@@ -85,7 +85,7 @@ rule samtools_sort:
         temp("/global/scratch/users/arphillips/data/interm/sorted_bam/{sample}.sorted.bam"),
     params:
         tmp = "/global/scratch/users/arphillips/temp/sort_bam/{sample}"
-    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/samtools.yaml"
+    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/samtools.yaml"
 #    benchmark:
 #        "/global/scratch/users/arphillips/benchmarks/{sample}.sort.benchmark.txt"
     shell:
@@ -105,7 +105,7 @@ rule add_rg:
         tmp = "/global/scratch/users/arphillips/temp/addrg/{sample}",
         sample = "{sample}",
         rg = randint(1,1000)
-    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/gatk.yaml"
+    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/gatk.yaml"
 #    benchmark:
 #        "/global/scratch/users/arphillips/benchmarks/{sample}.rg.benchmark.txt"
     shell:
@@ -132,7 +132,7 @@ rule mark_dups:
         bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam"
     params:
         tmp = "/global/scratch/users/arphillips/temp/mark_dups/{sample}"
-    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/gatk.yaml"
+    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/gatk.yaml"
 #    benchmark:
 #        "/global/scratch/users/arphillips/benchmarks/{sample}.dups.benchmark.txt"
     shell:
@@ -163,7 +163,7 @@ rule bamqc:
         "/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt"
     params:
         dir = "/global/scratch/users/arphillips/reports/bamqc/{sample}_stats"
-    conda: "/global/home/users/arphillips/aspen/aspen_snakemake/envs/qualimap.yaml"
+    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/qualimap.yaml"
 #    benchmark:
 #        "/global/scratch/users/arphillips/benchmarks/{sample}.bamqc.benchmark.txt"
     shell:

@@ -27,7 +27,7 @@ latency-wait: 120
 
 # Additional settings used for our purposes
 use-conda: True
-jobs: 50
+jobs: 60
 keep-going: True
 rerun-incomplete: True
 printshellcmds: True
