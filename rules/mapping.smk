@@ -74,7 +74,7 @@ rule bwa_map:
 #    benchmark:
 #        "/global/scratch/users/arphillips/benchmarks/{sample}.bwa.benchmark.txt"
     shell:
-        "/global/scratch/users/arphillips/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -p -t 4 {input.ref} {input.trim} |"
+        "/global/scratch/users/arphillips/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -p -t 8 {input.ref} {input.trim} |"
         "samtools view -Sb > {output}"
 
 # (4) Sort bams
@@ -146,7 +146,8 @@ rule mark_dups:
         --CREATE_INDEX true \
         -MAX_FILE_HANDLES 1000 \
         --ASSUME_SORT_ORDER coordinate \
-        --TMP_DIR {params.tmp}
+        --TMP_DIR {params.tmp} \
+        --METRICS_FILE {params.tmp}.metrics
         # Remove scratch directory
         rm -rf {params.tmp}
         """
@@ -177,7 +178,7 @@ rule bamqc:
         -outformat HTML \
         --skip-duplicated \
         --java-mem-size=24G
-        rm -r {params.dir}/css  {params.dir}/qualimapReport.html {params.dir}/images_qualimapReport  {params.dir}raw_data_qualimapReport
+        rm -r {params.dir}/css  {params.dir}/qualimapReport.html {params.dir}/images_qualimapReport  {params.dir}/raw_data_qualimapReport
         """
 
 # (8) Assess DNA damage with mapDamage

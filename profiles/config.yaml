@@ -27,7 +27,7 @@ latency-wait: 120
 
 # Additional settings used for our purposes
 use-conda: True
-jobs: 60
+jobs: 100
 keep-going: True
 rerun-incomplete: True
 printshellcmds: True
@@ -75,14 +75,15 @@ set-resources:
   #     bwa_map
   # ----------------------------------------------------------------------
 
-  # Just under three days to map
+  # Just under three days to map for most files, some require longer.
+  # Giving 7 days runtime so the pipeline stops breaking 10080
   # savio2_htc is 6.4 GB per core
   bwa_map:
-    threads: 4
-    runtime: 4320
+    threads: 8
+    runtime: 5120
     mem_mb: 25600
-    slurm_partition: "savio3_htc"
-    #  qos: "savio_long"
+    slurm_partition: "savio2_htc"
+    #    slurm: "qos=savio_long"
     
 
   # ----------------------------------------------------------------------
@@ -107,9 +108,9 @@ set-resources:
   #     bamqc
   # ----------------------------------------------------------------------
 
-  bampqc:
-    mem_mb: 24000
-    threads: 3
+  bamqc:
+    mem_mb: 38400
+    threads: 4
     runtime: 120
 
   # ----------------------------------------------------------------------
