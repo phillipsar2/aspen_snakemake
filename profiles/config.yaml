@@ -14,7 +14,7 @@ data:
 
     # Path to the reference genome, using the file ideally as it is provided by the GATK bundle.
     # Path needs to be absolute! No relative path (e.g., `../ref`)!
-    genome: "/global/scratch/projects/fc_moilab/PROJECTS/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/Populus_tremuloides_var_CAM1604-4_HAP1.mainGenome.fasta"
+    genome: "/global/scratch/projects/fc_moilab/projects/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/Populus_tremuloides_var_CAM1604-4_HAP1.mainGenome.fasta"
 
 # =================================================================================================
 #    Snakemake settings
@@ -76,14 +76,12 @@ set-resources:
   # ----------------------------------------------------------------------
 
   # Just under three days to map for most files, some require longer.
-  # Giving 7 days runtime so the pipeline stops breaking 10080
-  # savio2_htc is 6.4 GB per core
+  # savio4_htc is 9.14 GB per core
   bwa_map:
-    threads: 8
-    runtime: 5120
-    mem_mb: 25600
-    slurm_partition: "savio2_htc"
-    #    slurm: "qos=savio_long"
+    threads: 6
+    runtime: 4320
+    mem_mb: 54000
+    slurm_partition: "savio4_htc"
     
 
   # ----------------------------------------------------------------------
@@ -145,13 +143,13 @@ set-resources:
     extra: ""
 
   # ----------------------------------------------------------------------
-  #     damageprofiler
+  #     mpileup
   # ----------------------------------------------------------------------
 
-  damageprofiler:
-    # Additional parameters for damageprofiler, see https://damageprofiler.readthedocs.io/en/latest/contents/generalUsage.html
-    # Used only if settings:damageprofiler == true
-    extra: ""
+  mpileup:
+    mem_mb: 67200
+    threads: 6
+    runtime: 2880
 
   # ----------------------------------------------------------------------
   #     multiqc

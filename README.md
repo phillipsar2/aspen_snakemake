@@ -50,7 +50,12 @@ The directory roughly follows a CookieCutter directory structure.
 * Assess mapping quality with qualimap's bamqc
 * Likely need to merge bam files from multiple sequencing runs of the same genotype
 
-3. Determining sex
+3. Variant calling and filtering
+* Variants are initially called with bcftools mpileup. Quality of SNPs is assed between each filtering step.
+	Raw SNPs: 
+* Variants are hard filtered for biallelic sites, MQ > 40, and QUAL > 30
+
+4. Determining sex
 * The TOZ19 sex locus region was identified by mapping the *P. trichocarpa* genomic sequence to the reference with minimap2 (the reference is Male)
 * The sex-linked region was identified by mapping the *P. tremuloides* concensus sequence from Pakull et al. (2014) to the reference with minimap2 and blastn using the scripts `scripts/blastn_TOZ19.sh` and  `scripts/minimap_TOZ19.sh`
 * Samtools depth is used to extract the per-bp coverage of the TOZ19 region and then mean coverage of the region is calculated.

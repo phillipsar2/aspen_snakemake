@@ -17,7 +17,8 @@ rule bamlist:
 rule mpileup:
     input:
         ref = config["data"]["reference"]["genome"],
-        bamlist = expand("/global/scratch/users/arphillips/data/interm/mark_dups/{date}.bamlist.txt", date = DATE) 
+        bamlist = "/global/scratch/users/arphillips/data/interm/mark_dups/2025-01-10.bamlist.txt"
+        #bamlist = expand("/global/scratch/users/arphillips/data/interm/mark_dups/{date}.bamlist.txt", date = DATE) 
     output:
         vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.raw.vcf.gz"
     params:
@@ -92,7 +93,7 @@ rule filter_snps:
         gatk VariantFiltration \
         -V {input.vcf} \
         -filter \"QUAL < 30.0\" --filter-name \"QUAL30\" \
-        -filter \"MQ < 30.0\" --filter-name \"MQ30\" \
+        -filter \"MQ < 40.0\" --filter-name \"MQ40\" \
         -O {output}
         """
 
