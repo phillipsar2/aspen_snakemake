@@ -74,7 +74,7 @@ rule bwa_map:
 #    benchmark:
 #        "/global/scratch/users/arphillips/benchmarks/{sample}.bwa.benchmark.txt"
     shell:
-        "/global/scratch/users/arphillips/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -p -t 8 {input.ref} {input.trim} |"
+        "/global/scratch/users/arphillips/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -p -t 10 {input.ref} {input.trim} |"
         "samtools view -Sb > {output}"
 
 # (4) Sort bams

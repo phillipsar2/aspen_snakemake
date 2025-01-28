@@ -78,9 +78,9 @@ set-resources:
   # Just under three days to map for most files, some require longer.
   # savio4_htc is 9.14 GB per core
   bwa_map:
-    threads: 6
+    cpus_per_task: 10
     runtime: 4320
-    mem_mb: 54000
+    mem_mb: 73000
     slurm_partition: "savio4_htc"
     
 
@@ -100,7 +100,7 @@ set-resources:
   mark_dups:
     mem_mb: 19200
     threads: 2
-    runtime: 120
+    runtime: 420
 
   # ----------------------------------------------------------------------
   #     bamqc

@@ -54,7 +54,7 @@ rule get_snps:
 
 # (10) Filtering diagnostics - extract variant quality scores
 # Roughly following suggestions in https://evodify.com/gatk-in-non-model-organism/
-# Extract alternate base quality (QUAL), mapping quality (MQ), depth at the site (DP), and allele depth for each genotype (AD)
+# Extract alternate base quality (QUAL), mapping quality (MQ), and total depth at the site (DP)
 rule diagnostics:
     input:
         vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.snps.vcf.gz",
@@ -67,7 +67,7 @@ rule diagnostics:
         gatk VariantsToTable \
         -R {input.ref} \
         -V {input.vcf} \
-        -F QUAL -F DP -F MQ -GF AD \
+        -F CHROM -F POS -F QUAL -F DP -F MQ \
         -O {output}
         """
 

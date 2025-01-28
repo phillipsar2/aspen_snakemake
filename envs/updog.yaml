@@ -1,0 +1,10 @@
+channels:
+  # conda-forge channel first, as required by issue #25
+  - conda-forge
+  - bioconda
+  - r
+dependencies:
+  - r #==4.1       
+  - r-ggplot2 #==3.3.6
+  - r-devtools
+  - r-argparser

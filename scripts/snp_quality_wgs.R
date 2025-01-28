@@ -10,7 +10,7 @@ library(ggplot2)
 ##############
 
 # Load quality table for one chromosome
-chr <- "Chr02"
+chr <- "Chr13"
 qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.", chr ,".table") , header = T)
 head(qual)
 dim(qual)
@@ -58,6 +58,9 @@ dplyr::filter(qual, QUAL > 20, MQ > 20) %>%
 dplyr::filter(qual, QUAL > 30, MQ > 40) %>%
   dim()
 
+
+# Looking at depth distribution across the chromosome
+qual[1:5,1:5]
 
 ##############
 ### Filtering for Depth
