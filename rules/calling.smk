@@ -93,7 +93,7 @@ rule filter_snps:
         gatk VariantFiltration \
         -V {input.vcf} \
         -filter \"QUAL < 30.0\" --filter-name \"QUAL30\" \
-        -filter \"MQ < 40.0\" --filter-name \"MQ40\" \
+        -filter \"MQ < 30.0\" --filter-name \"MQ30\" \
         -O {output}
         """
 
