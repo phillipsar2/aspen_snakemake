@@ -10,7 +10,7 @@ library(ggplot2)
 ##############
 
 # Load quality table for one chromosome
-chr <- "Chr13"
+chr <- "Chr04"
 qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.", chr ,".table") , header = T)
 head(qual)
 dim(qual)
@@ -55,26 +55,20 @@ dim(qual)
 dplyr::filter(qual, QUAL > 20, MQ > 20) %>%
   dim()
 
-dplyr::filter(qual, QUAL > 30, MQ > 40) %>%
+dplyr::filter(qual, QUAL > 30, MQ > 30) %>%
   dim()
 
-
-# Looking at depth distribution across the chromosome
-qual[1:5,1:5]
-
 ##############
-### Filtering for Depth
+### Filtering for Depth ----
 ##############
 # Load quality table
-qual <- read.table("~/aspen/radseq/erincar/rad_aspen.all.filtered.nocall.table" , header = T, skip = 1)
+chr <- "Chr04"
+qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.", chr ,".filtered.nocall.table") , header = T)
 head(qual)
 str(qual)
 dim(qual)
 
 qual[1:10,1:10]
-
-# Exclude HSYDC_448_18.DP
-qual <- qual[,colnames(qual) != "HSYDC_448_18.DP"]
 
 genotypes <- dim(qual)[2] - 2
 
@@ -89,7 +83,7 @@ dim(qual)
 qual[qual == 0] <- "NA"
 dim(qual)
 
-# Estimate mean genotype depth for sites with coverage
+# Estimate mean genotype depth across sites
 geno_dp <- colMeans(qual[3:dim(qual)[2]], na.rm = T)
 
 ## Plot mean genotype depth
@@ -102,14 +96,14 @@ p_gdp <- reshape2::melt(geno_dp) %>%
   labs(x = "Average genotype depth", 
        title = paste0("Average genotype depth for ", genotypes, " genotypes"))
 
-ggsave(plot = p_gdp, filename = paste0("~/aspen/radseq/erincar/quality_check/avg_geno_dp.", Sys.Date(),".jpg"),
+ggsave(plot = p_gdp, filename = paste0("/global/scratch/users/arphillips/reports/filtering/depth/genotype_depth.", Sys.Date(), ".", chr ,".jpeg"),
        width = 5, height = 4, units = "in")
 
 # Plot genotype depth distributions
 qlist <- matrix(nrow = genotypes, ncol = 3) # define number of samples (10 samples here)
 qlist <- data.frame(qlist, row.names=colnames(qual)[-c(1:2)])
 
-pdf(paste0("~/aspen/radseq/erincar/quality_check/genotype_depth_distributions.",Sys.Date(),".pdf"))
+pdf(paste0("/global/scratch/users/arphillips/reports/filtering/depth/genotype_depth_distributions.",Sys.Date(),".pdf"))
 par(mfrow=c(4,3)) # mfrow sets max number of plots (rows by columns), automatically makes new pages if PDF
 
 for (i in 3:dim(qual)[2]) {
@@ -122,15 +116,17 @@ for (i in 3:dim(qual)[2]) {
 dev.off()
 
 # # Test out some depth + missingness filters
-# max = 30
-# min = 6
-# miss = 0.1
-# 
-# qual[qual < 6] <- "NA"
-# qual[qual > max] <- "NA"
-# 
-# genos_with_data <- rowSums(is.na(qual[,3:dim(qual)[2]])) # number of genotypes to be removed at each site
-# hist(genos_with_data)
+max = 74
+min = 6
+miss = 0.1
+
+test <- qual
+
+test[test < min] <- "NA"
+test[test > max] <- "NA"
+
+genos_with_data <- rowSums(is.na(qual[,3:dim(qual)[2]])) # number of genotypes to be removed at each site
+hist(genos_with_data)
 
 # Depth per site
 site_dp <- rowSums(qual[3:dim(qual)[2]], na.rm = T)
@@ -138,4 +134,8 @@ hist(site_dp, xlim = c(0, 40000))
 
 # Genotypes with data (not zero)
 genos_with_data <- rowSums(is.na(qual[,3:dim(qual)[2]]))
-hist(genos_with_data, xlab = "Number of genotypes sequenced", main = "Number of genotypes sequenced per site", ylab = "Number of sites")
+hist(genos_with_data, 
+     xlab = "Number of genotypes sequenced", 
+     main = "Number of genotypes sequenced per site", 
+     ylab = "Number of sites")
+

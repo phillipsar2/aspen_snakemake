@@ -53,9 +53,10 @@ The directory roughly follows a CookieCutter directory structure.
 3. Variant calling and filtering
 * Variants are initially called with bcftools mpileup. Quality of SNPs is assed between each filtering step.
 	Raw SNPs: 
-* Variants are hard filtered for biallelic sites, MQ > 30, and QUAL > 30
-	SNP after hard filtering:
-* Variants are then filtered for a depth where
+* Variants are hard filtered for biallelic sites, MQ > 40, and QUAL > 40.
+	SNPs after hard filtering:
+* Variants are then filtered for a depth where 10 < DP < 75 and less than 10% missing data. 
+        SNPs remaining:
 
 4. Determining sex
 * The TOZ19 sex locus region was identified by mapping the *P. trichocarpa* genomic sequence to the reference with minimap2 (the reference is Male)

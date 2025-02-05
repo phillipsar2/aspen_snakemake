@@ -17,7 +17,7 @@ rule bamlist:
 rule mpileup:
     input:
         ref = config["data"]["reference"]["genome"],
-        bamlist = "/global/scratch/users/arphillips/data/interm/mark_dups/2025-01-10.bamlist.txt"
+        bamlist = "/global/scratch/users/arphillips/data/interm/mark_dups/2025-01-30.bamlist.txt"
         #bamlist = expand("/global/scratch/users/arphillips/data/interm/mark_dups/{date}.bamlist.txt", date = DATE) 
     output:
         vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.raw.vcf.gz"
@@ -29,7 +29,7 @@ rule mpileup:
     shell:
         """
         bcftools mpileup -Ou -f {input.ref} -b {input.bamlist} -r {params.chr} \
-        --annotate FORMAT/AD,FORMAT/DP --threads 8 | \
+        --annotate FORMAT/AD,FORMAT/DP --threads 10 | \
         bcftools call -mv -Oz -o {output.vcf}
         bcftools index -t {output}
         """
@@ -71,12 +71,7 @@ rule diagnostics:
         -O {output}
         """
 
-# (11) Concatenate files for analysis
-#  head -n1 rad_aspen.Potre.1MX.Chr01.table > rad_aspen.all.table
-# grep -v QUAL  <(cat rad_aspen.Potre.1MX.*.table) >> rad_aspen.all.table
-
-
-# (12) Hard filter SNPs
+# (11) Hard filter SNPs
 # https://gatk.broadinstitute.org/hc/en-us/articles/360035531112?id=23216#2
 # https://gatk.broadinstitute.org/hc/en-us/articles/360037499012?id=3225
 
@@ -97,7 +92,7 @@ rule filter_snps:
         -O {output}
         """
 
-# (13) Filter SNPs to only biallelic sites and exclude the sites that failed the hard filter
+# (12) Filter SNPs to only biallelic sites and exclude the sites that failed the hard filter
 rule filter_nocall:
     input:
         ref = config["data"]["reference"]["genome"],
@@ -110,7 +105,7 @@ rule filter_nocall:
         gatk SelectVariants -V {input.vcf} --exclude-filtered true  --restrict-alleles-to BIALLELIC -O {output}
         """
 
-# (14) Extract genotype depth across samples to determine DP cutoff
+# (13) Extract genotype depth across samples to determine DP cutoff
 rule depth:
     input:
         vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.filtered.nocall.vcf",
@@ -128,13 +123,7 @@ rule depth:
         -O {output}
         """
 
-# (15) Concatenate files for analysis
-#  head -n1 rad_aspen.Potre.1MX.Chr01.filtered.nocall.table > rad_aspen.all.filtered.nocall.table
-# grep -v CHROM  <(cat rad_aspen.Potre.1MX.*.filtered.nocall.table) >> rad_aspen.all.filtered.nocall.table
-
-
-# (16) Fitlter by depth of each genotype at each site
-# 6 < DP < 30 with 10% missing is too strict - only 15 SNPs
+# (14) Fitlter by depth of each genotype at each site
 rule filter_depth:
     input:
         vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.filtered.nocall.vcf",
@@ -155,7 +144,7 @@ rule filter_depth:
         --set-filtered-genotype-to-no-call true -O {output.dp}
         """
 
-# (17) Filter snps for genotype missingness (10%)
+# (15) Filter snps for genotype missingness (10%)
 rule depth_nocall:
     input:
         vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.depth.{min_dp}dp{max_dp}.vcf",

@@ -9,6 +9,5 @@ rule toz19:
         """
         samtools index {input.bam}
         samtools depth {input.bam} -r ""Chr13"" | \
-        cut -f3 > {output}
-#        awk "{{sum += \$1}} END {{ if (NR > 0) {{print sum/NR}} else {{print 0}} }}" > {output}
+        cut -f2,3 > {output}
         """
