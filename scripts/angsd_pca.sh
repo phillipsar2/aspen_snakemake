@@ -3,7 +3,7 @@
 #SBATCH --account=ac_moilab
 #SBATCH --partition=savio4_htc
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=30
+#SBATCH --cpus-per-task=40
 #SBATCH --time=2-00:00
 #SBATCH --output /global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/slurm_log/pca_%j.out
 #SBATCH --error /global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/slurm_log/pca_%j.err
@@ -18,7 +18,7 @@ pre="/global/scratch/users/arphillips/data/angsd/pca/singlepca.3dp70"
 ls /global/scratch/users/arphillips/data/interm/mark_dups/*bam > $bamlist
 
 angsd \
--bam $bamlist -P 30 \
+-bam $bamlist -P 40 \
 -GL 2 \
 -uniqueOnly 1 -remove_bads 1 -only_proper_pairs 1 -trim 0 -C 50 \
 -doMajorMinor 4 \

@@ -181,7 +181,7 @@ rule bamqc:
         rm -r {params.dir}/css  {params.dir}/qualimapReport.html {params.dir}/images_qualimapReport  {params.dir}/raw_data_qualimapReport
         """
 
-# (8) Assess DNA damage with mapDamage
+# (8) Assess DNA damage with pyDamage
 rule mapdamage:
     input:
         bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam",
@@ -190,7 +190,8 @@ rule mapdamage:
         "/global/scratch/users/arphillips/reports/mapdamage/{bam}/5pCtoT_freq.txt"
     params:
         outdir = "/global/scratch/users/arphillips/reports/mapdamage/{bam}"
+    conda: "/global/home/users/arphillips/.conda/envs/mapdamage"
     benchmark:
-        "/global/scratch/users/arphillips/benchmarks/{bam}.damage.benchmark.txt"
+        "/global/scratch/users/arphillips/benchmarks/{bam}.mapdamage.benchmark.txt"
     shell:
          "mapDamage -i {input.bam} -r {input.ref} -d {params.outdir}"
