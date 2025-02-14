@@ -28,6 +28,7 @@ latency-wait: 120
 # Additional settings used for our purposes
 use-conda: True
 jobs: 100
+max-jobs-per-timespan: "60/1m"
 keep-going: True
 rerun-incomplete: True
 printshellcmds: True
@@ -118,29 +119,8 @@ set-resources:
   mapdamage:
     mem_mb: 24000
     threads: 3
-    runtime: 120
+    runtime: 2880
 
-  # ----------------------------------------------------------------------
-  #     gatk
-  # ----------------------------------------------------------------------
-
-  # ----------------------------------------------------------------------
-  #     snpeff
-  # ----------------------------------------------------------------------
-
-  snpeff:
-    # Additional parameters for snpeff, see https://pcingola.github.io/SnpEff/se_commandline/
-    # Used only if settings:snpeff == true
-    extra: "-Xmx4g"
-
-  # ----------------------------------------------------------------------
-  #     mapdamage
-  # ----------------------------------------------------------------------
-
-  mapdamage:
-    # Additional parameters for mapdamage, see http://ginolhac.github.io/mapDamage/
-    # Used only if settings:mapdamage == true
-    extra: ""
 
   # ----------------------------------------------------------------------
   #     mpileup
@@ -151,10 +131,3 @@ set-resources:
     threads: 10
     runtime: 4320
 
-  # ----------------------------------------------------------------------
-  #     multiqc
-  # ----------------------------------------------------------------------
-
-  multiqc:
-    # Additional parameter for multiqc
-    extra: ""

@@ -181,7 +181,7 @@ rule bamqc:
         rm -r {params.dir}/css  {params.dir}/qualimapReport.html {params.dir}/images_qualimapReport  {params.dir}/raw_data_qualimapReport
         """
 
-# (8) Assess DNA damage with pyDamage
+# (8) Assess DNA damage with mapDamage
 rule mapdamage:
     input:
         bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam",

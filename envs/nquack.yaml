@@ -1,0 +1,11 @@
+channels:
+# Somehow only works with the channels in this order...
+  - conda-forge
+  - bioconda
+  - r
+dependencies:
+# Tools
+  - bioconda::samtools ==1.9
+  - r
+  - r-devtools
+  - r-argparser
