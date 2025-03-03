@@ -129,7 +129,8 @@ rule mark_dups:
     input:
         "/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bam"
     output:
-        bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam"
+#        bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam"
+        bam = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam",
     params:
         tmp = "/global/scratch/users/arphillips/temp/mark_dups/{sample}"
     conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/gatk.yaml"
@@ -159,7 +160,8 @@ rule mark_dups:
 # then remove all the excess files we don't need
 rule bamqc:
     input:
-        "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam"
+        "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam",
+#        "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam"
     output:
         "/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt"
     params:
@@ -184,7 +186,8 @@ rule bamqc:
 # (8) Assess DNA damage with mapDamage
 rule mapdamage:
     input:
-        bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam",
+        bam = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam",
+#        bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam",
         ref = config["data"]["reference"]["genome"]
     output:
         "/global/scratch/users/arphillips/reports/mapdamage/{bam}/5pCtoT_freq.txt"

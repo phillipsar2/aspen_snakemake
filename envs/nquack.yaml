@@ -9,3 +9,4 @@ dependencies:
   - r
   - r-devtools
   - r-argparser
+  - r-dplyr

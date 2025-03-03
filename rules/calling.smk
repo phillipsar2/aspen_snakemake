@@ -1,11 +1,11 @@
 # (7) make bam list
 rule bamlist:
     input:
-       bams = expand("/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam", bam = BAM )
+       bams = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.dedup.bam", bam = BAM)
     output:
-       bamlist = "/global/scratch/users/arphillips/data/interm/mark_dups/{date}.bamlist.txt"
+       bamlist = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{date}.bamlist.txt"
     params:
-       path = "/global/scratch/users/arphillips/data/interm/mark_dups/"
+       path = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/"
     shell:
        "ls {params.path}*bam > {output}"
 
@@ -17,8 +17,7 @@ rule bamlist:
 rule mpileup:
     input:
         ref = config["data"]["reference"]["genome"],
-        bamlist = "/global/scratch/users/arphillips/data/interm/mark_dups/2025-01-30.bamlist.txt"
-        #bamlist = expand("/global/scratch/users/arphillips/data/interm/mark_dups/{date}.bamlist.txt", date = DATE) 
+        bamlist = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{date}.bamlist.txt", date = DATE) 
     output:
         vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.raw.vcf.gz"
     params:
