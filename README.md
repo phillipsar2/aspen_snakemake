@@ -50,6 +50,11 @@ The directory roughly follows a CookieCutter directory structure.
 * Assess mapping quality with qualimap's bamqc
 * Likely need to merge bam files from multiple sequencing runs of the same genotype
 
+3. Extracting plastid genome reads
+* Reads were independently mapped to a P. tremuloides chloroplast genome (MW376839.1) using bwa-mem2
+* `samtools sort` was used to sort BAM files
+* `samtools fastq` was used to convert BAMs back to fastq files, excluding unmapped reads and singletons. Pair-end reads were seperated into two files
+
 3. Variant calling and filtering
 * Variants are initially called with bcftools mpileup. Quality of SNPs is assed between each filtering step.
 	Raw variants: 62,636,412 (n = 174) 
