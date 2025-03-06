@@ -22,6 +22,9 @@ DATE = datetime.datetime.utcnow().strftime("%Y-%m-%d")
 MAX_DP = ["75"]
 MIN_DP = ["10"]
 
+# Ploidy range
+GENOTYPE_PLOIDY = ["2", "3"]
+
 # =================================================================================================
 #     Target Rules
 # =================================================================================================
@@ -41,7 +44,9 @@ rule all:
 #        vcf = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.nocall.{min_dp}dp{max_dp}.vcf", chr = CHR, min_dp = MIN_DP, max_dp = MAX_DP)
       ## Plastids
 #        map_plas = expand("/global/scratch/users/arphillips/data/interm/mapped_chl/{sample}.mapped_chl.bam", sample = SAMPLE)
-        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
+#        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
+      ## Genotyping
+        joint_geno = expand("data/processed/genotyped/wgs_aspen.{chr}.genos.{min_dp}dp{max_dp}.ploidy{genotype_ploidy}.vcf.gz", chr = CHR, min_dp = MIN_DP, max_dp = MAX_DP, genotype_ploidy = GENOTYPE_PLOIDY)
 
 # =================================================================================================
 #     Rule Modules
@@ -50,3 +55,4 @@ include: "rules/mapping.smk"
 include: "rules/calling.smk"
 include: "rules/ploidy_sex.smk"
 include: "rules/plastid.smk"
+include: "rules/genotyping.smk"
