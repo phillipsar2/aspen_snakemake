@@ -24,6 +24,7 @@ MIN_DP = ["10"]
 
 # Ploidy range
 GENOTYPE_PLOIDY = ["2", "3"]
+PLOIDY = ["diploid", "triploid"]
 
 # =================================================================================================
 #     Target Rules
@@ -33,7 +34,7 @@ rule all:
       ## Maping
         #fastqc = expand("/global/scratch/users/arphillips/qc/fastqc/{sample}_fastqc.zip", sample = SAMPLE),
 #        fastp = expand("/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz" , sample = `SAMPLE),
-#        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam", sample = SAMPLE)
+#        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam", sample = SAMPLE),
 #        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt", sample = SAMPLE),
 #        mapdamage = expand("/global/scratch/users/arphillips/reports/mapdamage/{bams}/5pCtoT_freq.txt", bams = BAM),
       ## Sex
@@ -46,13 +47,14 @@ rule all:
 #        map_plas = expand("/global/scratch/users/arphillips/data/interm/mapped_chl/{sample}.mapped_chl.bam", sample = SAMPLE)
 #        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
       ## Genotyping
-        joint_geno = expand("data/processed/genotyped/wgs_aspen.{chr}.genos.{min_dp}dp{max_dp}.ploidy{genotype_ploidy}.vcf.gz", chr = CHR, min_dp = MIN_DP, max_dp = MAX_DP, genotype_ploidy = GENOTYPE_PLOIDY)
+        updog = expand("/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{chr}.{date}.txt", ploidy = "triploid", chr = CHR, date = DATE)
 
 # =================================================================================================
 #     Rule Modules
 # =================================================================================================
 include: "rules/mapping.smk"
-include: "rules/calling.smk"
-include: "rules/ploidy_sex.smk"
-include: "rules/plastid.smk"
-include: "rules/genotyping.smk"
+include: "rules/mapping_otherpoplar.smk"
+#include: "rules/calling.smk"
+#include: "rules/ploidy_sex.smk"
+#include: "rules/plastid.smk"
+include: "rules/updog_genotyping.smk"

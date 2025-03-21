@@ -6,69 +6,25 @@ library(stringr)
 library(ggplot2)
 library(dplyr)
 library(forcats)
+library(viridis)
 
 # (1) Load data ----
-C <- as.matrix(read.table("/global/scratch/users/arphillips/data/angsd/pca/singlepca.3dp70.chr2.covMat"))
+C <- as.matrix(read.table("/global/scratch/users/arphillips/data/angsd/pca/singlepca.3dp70.chr1.covMat"))
 
 # (2) Load metadata ----
-bamlist <- read.csv("/global/scratch/users/arphillips/data/interm/mark_dups/bamlist.txt", header = F, col.names = c("bam")) # bamlist ANGSD input
-seq_names <- str_split(bamlist$bam, "/", simplify = T)[,9] %>%
-  lapply(., gsub, pattern = "dedup.bam", replacement="fastq.gz") %>%
+bamlist <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/bamlist.02242025.txt", header = F, col.names = c("bam")) # bamlist ANGSD input
+
+seq_names <- lapply(bamlist$bam, gsub, pattern = "dedup.bam", replacement="fastq.gz") %>%
   unlist()
 
-jgi_meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/completed_sequencing_samplereport_11122024.csv") # JGI metadata file
-# jgi_meta$RQC.Seq.Unit.Name
+meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.2025-02-24.csv")
+str(meta)
+dim(meta)
 
-ben_meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/all_sites_DO_NOT_SHARE_d02062024.csv")
+meta <- arrange(meta, bams)
 
-# Subset metadata
-jgi_sub <- jgi_meta[jgi_meta$RQC.Seq.Unit.Name %in% seq_names,]
-jgi_sub_ordered <- jgi_sub %>%
-  arrange(fct_relevel(RQC.Seq.Unit.Name, seq_names))
-
-dim(jgi_sub_ordered)[1] == length(seq_names)    # correctly subset?
-sum(jgi_sub_ordered$RQC.Seq.Unit.Name == seq_names) # correctly ordered?
-
-ben_sub <- ben_meta[ben_meta$ID %in% jgi_sub_ordered$Sample.Name,]
-
-# jgi_sub_ordered$Sample.Name[!jgi_sub_ordered$Sample.Name %in% ben_meta$ID] # classic bad names
-
-all_meta <- merge(x = jgi_sub_ordered, y = ben_sub, by.x = "Sample.Name", by.y = "ID", all.x = T)
-all_meta_ordered <- all_meta %>%
-  arrange(fct_relevel(RQC.Seq.Unit.Name, seq_names))
-dim(all_meta_ordered)
-
-# (3) Load depth data ----
-chr <- "Chr02"
-qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.", chr ,".filtered.nocall.table") , header = T)
-
-## Estimate mean genotype depth across sites
-qual[,3:dim(qual)[2]] <- lapply(qual[,3:dim(qual)[2]], as.numeric)
-# qual[qual == 0] <- "NA" # Replace 0s with NA
-qual[,3:dim(qual)[2]] <- lapply(qual[,3:dim(qual)[2]], as.numeric)
-geno_dp <- colMeans(qual[3:dim(qual)[2]], na.rm = T) # estimate mean geno depth
-
-## Merge with subset data
-genotypes <- gsub(x = names(geno_dp), pattern = ".DP", replacement = ".fastq.gz") %>%
-  gsub(pattern = "X", replacement = "")
-depth_df <- data.frame(geno = genotypes,
-  depth = geno_dp)
-head(depth_df)
-dim(depth_df)
-
-all_meta_ordered$RQC.Seq.Unit.Name <- gsub(x=all_meta_ordered$RQC.Seq.Unit.Name, pattern = "-", replacement = "." )
-all_meta_ordered$RQC.Seq.Unit.Name <- as.factor(all_meta_ordered$RQC.Seq.Unit.Name)
-levels(all_meta_ordered$RQC.Seq.Unit.Name) <- gsub(x = levels(all_meta_ordered$RQC.Seq.Unit.Name), 
-                                                   pattern = "-", replacement = "." )
-
-all_meta_dp <- merge(x = all_meta_ordered, y = depth_df, by.x = "RQC.Seq.Unit.Name", by.y = "geno", all.x = T, sort = F)
-# all_meta_dp_ordered <- all_meta_dp %>%
-  # arrange(fct_relevel(RQC.Seq.Unit.Name, seq_names))
-
-dim(all_meta_dp)
-hist(all_meta_dp$depth)
-head(all_meta_dp$RQC.Seq.Unit.Name)
-head(all_meta_ordered$RQC.Seq.Unit.Name)
+tail(seq_names)
+tail(meta$bams)
 
 # (4)  Compute eigenvalues ----
 # Compute eigenvalues and corresponding eigenvectors of S
@@ -80,10 +36,11 @@ pc <- (e$values / sum(e$values)) *100
 pc[1:10]
 
 # (5) Plot ----
-df <- as.data.frame(cbind(e$vectors[,1:10], all_meta_dp))
-names(df) <- c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", "PC10", colnames(all_meta_dp))
+df <- as.data.frame(cbind(e$vectors[,1:10], meta))
+names(df) <- c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", "PC10", colnames(meta))
+dim(df)
 
-df<-filter(df, PC1 < 0.25, PC2 < 0.25, PC2 > -0.025)
+# df <- filter(df, PC1 < 0.25, PC2 < 0.25, PC2 > -0.025)
 
 pdf(paste0("/global/scratch/users/arphillips/data/angsd/pca/PCA_plot.", Sys.Date(), ".", chr ,".pdf"),
     width = 7, height = 5)
@@ -158,7 +115,7 @@ df %>%
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank())  +
   ggtitle("Latitude") +
-  scale_color_viridis_c(option = "magma", direction = -1)
+  scale_color_viridis()
 
 
 df %>%

@@ -22,7 +22,7 @@ rule mpileup:
         vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.raw.vcf.gz"
     params:
         chr = "{chr}"
-    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/bcftools.yaml"
+#    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/bcftools.yaml"
     benchmark:
          "/global/scratch/users/arphillips/benchmarks/{chr}.mpileup.benchmark.txt"
     shell:
@@ -40,7 +40,7 @@ rule get_snps:
         vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.raw.vcf.gz"
     output:
          "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.snps.vcf.gz"
-    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/gatk.yaml"
+    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
         gatk SelectVariants \
@@ -60,7 +60,7 @@ rule diagnostics:
         ref = config["data"]["reference"]["genome"]
     output:
         "/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{chr}.table"
-    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/gatk.yaml"
+    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
         gatk VariantsToTable \
@@ -81,7 +81,7 @@ rule filter_snps:
         vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.snps.vcf.gz"
     output:
         "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.filtered.snps.vcf"
-    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/gatk.yaml"
+    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
         gatk VariantFiltration \
@@ -98,7 +98,7 @@ rule filter_nocall:
         vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.filtered.snps.vcf"
     output:
         "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.filtered.nocall.vcf"
-    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/gatk.yaml"
+    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
         gatk SelectVariants -V {input.vcf} --exclude-filtered true  --restrict-alleles-to BIALLELIC -O {output}
@@ -111,7 +111,7 @@ rule depth:
         ref = config["data"]["reference"]["genome"]
     output:
         "/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{chr}.filtered.nocall.table"
-    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/gatk.yaml"
+    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
         gatk VariantsToTable \
@@ -127,7 +127,7 @@ rule filter_depth:
     input:
         vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.filtered.nocall.vcf",
         ref = config["data"]["reference"]["genome"]
-    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/gatk.yaml"
+    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     output:
         dp = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.depth.{min_dp}dp{max_dp}.vcf"
     params:
@@ -149,7 +149,7 @@ rule depth_nocall:
         vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.depth.{min_dp}dp{max_dp}.vcf",
     output:
         vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.nocall.{min_dp}dp{max_dp}.vcf",
-    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/gatk.yaml"
+    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         "gatk SelectVariants -V {input} --exclude-filtered true --max-nocall-fraction 0.1 -O {output}"
 

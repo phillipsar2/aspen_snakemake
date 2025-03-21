@@ -7,6 +7,7 @@ The directory roughly follows a CookieCutter directory structure.
 
 ## Running the pipeline
 
+`rm -r .snakemake/metadata .snakemake/log .snakemake/slurm_logs`
 `snakemake --executor slurm --profile profiles/ --use-conda --rerun-triggers input`
 
 ## Project organization

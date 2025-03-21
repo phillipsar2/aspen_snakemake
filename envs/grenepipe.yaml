@@ -1,0 +1,41 @@
+name: snakemake
+channels:
+  - conda-forge
+  - bioconda
+  - r
+dependencies:
+#  - mamba < 2.0.0
+  - git
+  - curl
+  - snakemake ==8.15.2
+  - angsd == 0.940
+  - bcftools ==1.20
+  # Needed for bcftools stats
+  - tectonic ==0.15.0
+  # - texlive-core =20210325
+  # Need matplotlib for the plotting, which also needs python,
+  # so we provide our full stack of python here again, to make sure it works.
+  # We currently cannot use the latest matplotlib, as this conflicts with
+  # the python version.
+  - python ==3.12
+  - pandas ==2.2.2
+  - numpy  ==2.0.0
+  - matplotlib #==3.3.2 #==3.5.2
+  # https://github.com/moiexpositoalonsolab/grenepipe/issues/37
+  - chardet
+  - curl
+#  - bwa-mem2 ==2.2.1
+  - picard ==3.2.0
+#  - bioconda::samtools ==1.20
+  - samtools ==1.21
+  - gatk4 ==4.5.0.0
+  - fastp=0.23.4
+  - libdeflate=1.21
+  - libgcc-ng=12
+  - fastqc ==0.12.1
+  - r #==4.1       
+  - r-ggplot2 #==3.3.6
+  - r-devtools
+  - r-argparser
+  - r-dplyr
+  - qualimap ==2.3.0
