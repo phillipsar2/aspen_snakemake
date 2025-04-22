@@ -31,12 +31,12 @@ PLOIDY = ["diploid", "triploid"]
 # =================================================================================================
 rule all:
     input:
-      ## Maping
+      ## Mapping
         #fastqc = expand("/global/scratch/users/arphillips/qc/fastqc/{sample}_fastqc.zip", sample = SAMPLE),
-#        fastp = expand("/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz" , sample = `SAMPLE),
-#        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam", sample = SAMPLE),
-#        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt", sample = SAMPLE),
-#        mapdamage = expand("/global/scratch/users/arphillips/reports/mapdamage/{bams}/5pCtoT_freq.txt", bams = BAM),
+        fastp = expand("/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz" , sample = SAMPLE),
+        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam", sample = SAMPLE),
+        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt", sample = SAMPLE)
+#        mapdamage = expand("/global/scratch/users/arphillips/reports/mapdamage/{bams}/5pCtoT_freq.txt", bams = BAM)
       ## Sex
 #        depth = expand("/global/scratch/users/arphillips/data/toz19/{bam}.chr13.cov.txt", bam = BAM),
       ## Calling and filtering
@@ -47,14 +47,14 @@ rule all:
 #        map_plas = expand("/global/scratch/users/arphillips/data/interm/mapped_chl/{sample}.mapped_chl.bam", sample = SAMPLE)
 #        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
       ## Genotyping
-        updog = expand("/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{chr}.{date}.txt", ploidy = "triploid", chr = CHR, date = DATE)
+#        updog = expand("/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{chr}.{date}.txt", ploidy = "triploid", chr = CHR, date = DATE)
 
 # =================================================================================================
 #     Rule Modules
 # =================================================================================================
 include: "rules/mapping.smk"
-include: "rules/mapping_otherpoplar.smk"
+#include: "rules/mapping_otherpoplar.smk"
 #include: "rules/calling.smk"
 #include: "rules/ploidy_sex.smk"
 #include: "rules/plastid.smk"
-include: "rules/updog_genotyping.smk"
+#include: "rules/updog_genotyping.smk"

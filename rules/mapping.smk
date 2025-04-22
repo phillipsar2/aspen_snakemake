@@ -56,7 +56,7 @@ rule bwa_prep:
 #    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/bwa-mem2.yaml"
     shell:
         """
-        /global/home/users/arphillips/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index {input}
+        /global/scratch/users/arphillips/toolz/bwa-mem2/bwa-mem2 index {input}
         samtools faidx {input}
         gatk CreateSequenceDictionary -R {input}
         """
@@ -66,7 +66,7 @@ rule bwa_prep:
 rule bwa_map:
     input:
         ref = config["data"]["reference"]["genome"],
-        index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/Populus_tremuloides_var_CAM1604-4_HAP1.mainGenome.fasta.0123",
+        index = ancient("/global/scratch/projects/fc_moilab/projects/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/Populus_tremuloides_var_CAM1604-4_HAP1.mainGenome.fasta.0123"),
         trim = "/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz"
     output:
         temp("/global/scratch/users/arphillips/data/interm/mapped_bam/{sample}.mapped.bam")
@@ -74,7 +74,7 @@ rule bwa_map:
 #    benchmark:
 #        "/global/scratch/users/arphillips/benchmarks/{sample}.bwa.benchmark.txt"
     shell:
-        "/global/scratch/users/arphillips/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -p -t 10 {input.ref} {input.trim} |"
+        "/global/scratch/users/arphillips/toolz/bwa-mem2/bwa-mem2 mem -p -t 10 {input.ref} {input.trim} | "
         "samtools view -Sb > {output}"
 
 # (4) Sort bams
