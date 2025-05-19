@@ -1,4 +1,4 @@
-# (2) Trim reads sequenced at UCD with fastp
+# (2) Trim reads with fastp
 # Minimum length is 36 (-l 36)
 # Don't filter for quality (-Q)
 # Adapter trimming is enabled by default -- don't need to specify adapter seq
@@ -6,8 +6,8 @@
 # --cut_front is sliding window trimming from 5' to 3'
 rule fastp_trim:
     input:
-        f1 = "/global/scratch/users/arphillips/raw/other_poplars/{other_pop}*1.f*q.gz",
-        r2 = "/global/scratch/users/arphillips/raw/other_poplars/{other_pop}*2.f*q.gz"
+        f1 = "/global/scratch/users/arphillips/raw/other_poplars/{other_pop}_1.fastq.gz",
+        r2 = "/global/scratch/users/arphillips/raw/other_poplars/{other_pop}_2.fastq.gz"
     output:
         trim1 = temp("/global/scratch/users/arphillips/data/trimmed/{other_pop}.trim_1.fastq.gz"),
         trim2 = temp("/global/scratch/users/arphillips/data/trimmed/{other_pop}.trim_2.fastq.gz")
@@ -23,24 +23,8 @@ rule fastp_trim:
         -O {output.trim2} \
         --cut_front --cut_front_window_size 4 --cut_front_mean_quality 15 
         """
-
-# (3a) Prepare reference file
-# 9.6 GB per core available (core == threads)
-rule bwa_prep:
-    input: 
-        config["data"]["reference"]["genome"]
-    output:
-        index = "/global/scratch/projects/fc_moilab/projects/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/Populus_tremuloides_var_CAM1604-4_HAP1.mainGenome.fasta.0123"
-#    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/bwa-mem2.yaml"
-    shell:
-        """
-        /global/home/users/arphillips/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 index {input}
-        samtools faidx {input}
-        gatk CreateSequenceDictionary -R {input}
-        """
-
-# (3b) Align reads to the reference genome
-# Paired-end reads
+# (3) Align reads
+# Pair-end reads in seperate files
 rule bwa_map:
     input:
         ref = config["data"]["reference"]["genome"],
@@ -48,11 +32,19 @@ rule bwa_map:
         trim1 = "/global/scratch/users/arphillips/data/trimmed/{other_pop}.trim_1.fastq.gz",
         trim2 = "/global/scratch/users/arphillips/data/trimmed/{other_pop}.trim_2.fastq.gz"
     output:
-        temp("/global/scratch/users/arphillips/data/interm/mapped_bam/{other_pop}.mapped.bam")
+        "/global/scratch/users/arphillips/data/interm/mapped_bam/{other_pop}.mapped.bam"
+    params:
+        tmp1 = "/global/scratch/users/arphillips/scratch/bwamem/{other_pop}.trim_1.tmp.fastq.gz",
+        tmp2 = "/global/scratch/users/arphillips/scratch/bwamem/{other_pop}.trim_2.tmp.fastq.gz",
 #    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/bwa_map.yaml"
     shell:
-        "/global/scratch/users/arphillips/toolz/bwa-mem2-2.2.1_x64-linux/bwa-mem2 mem -t 10 {input.ref} {input.trim1} {input.trim2} |"
-        "samtools view -Sb > {output}"
+        """
+        zcat {input.trim1} | sed -E "s/^((@|\+)SRR[^.]+\.[^.]+)\.(1|2)/\1/" | gzip -c > {params.tmp1}
+        zcat {input.trim2} | sed -E "s/^((@|\+)SRR[^.]+\.[^.]+)\.(1|2)/\1/" | gzip -c > {params.tmp2}
+        /global/scratch/users/arphillips/toolz/bwa-mem2/bwa-mem2 mem -t 10 {input.ref} {params.tmp1} {params.tmp2} | \
+        samtools view -Sb > {output}
+        rm {params.tmp1} {params.tmp2}
+        """
 
 # (4) Sort bams
 rule samtools_sort:

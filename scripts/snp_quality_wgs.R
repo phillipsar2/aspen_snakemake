@@ -10,12 +10,10 @@ library(ggplot2)
 ##############
 
 # Load quality table for one chromosome
-chr <- "Chr04"
+chr <- "Chr01"
 qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.", chr ,".table") , header = T)
 head(qual)
 dim(qual)
-
-genos = dim(qual)[2]-3
 
 pdf(paste0("/global/scratch/users/arphillips/reports/filtering/alignment_quality.", Sys.Date(), ".", chr ,".pdf"))
 
@@ -27,7 +25,7 @@ qual %>%
   geom_vline(xintercept = 20, color = "black")+
   geom_vline(xintercept = 30, color = "black") +
   xlab("Base quality (QUAL)") +
-  ggtitle(paste0(chr, ", n = ", genos ))
+  ggtitle(paste0(chr))
 
 qual %>%
   ggplot(aes(x=MQ)) +
@@ -62,7 +60,7 @@ dplyr::filter(qual, QUAL > 30, MQ > 30) %>%
 ### Filtering for Depth ----
 ##############
 # Load quality table
-chr <- "Chr04"
+chr <- "Chr01"
 qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.", chr ,".filtered.nocall.table") , header = T)
 head(qual)
 str(qual)

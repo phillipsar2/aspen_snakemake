@@ -3,9 +3,10 @@
 
 library(stringr)
 library(forcats)
+library(dplyr)
 
 # Bamlist of existing bams
-dir = "/global/scratch/users/arphillips/data/interm/mark_dups/"
+dir = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/"
 bamlist <- list.files(path = dir, pattern = "\\.dedup.bam$", )
 bamlist
 
@@ -14,7 +15,7 @@ seq_names <- lapply(bamlist, gsub, pattern = "dedup.bam", replacement="fastq.gz"
 length(seq_names)
 
 # Meta data
-jgi_meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/completed_sequencing_samplereport_11122024.csv") # JGI metadata file
+jgi_meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/completed_sequencing_samplereport.d05132025.csv") # JGI metadata file
 # jgi_meta$RQC.Seq.Unit.Name
 
 ben_meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/all_sites_DO_NOT_SHARE_d02062024.csv")
@@ -83,7 +84,7 @@ fixes <- cbind(issues, solutions) %>%
   as.data.frame()
 fixes_sort <- fixes[match(bad, fixes$issues), ]
 
-# Replace bad in JGI with good from Ben
+# Replace bad in JGI with good from ben
 jgi_sub_ordered$Sample.Name[!jgi_sub_ordered$Sample.Name %in% ben_meta$ID] <- fixes_sort$solutions 
 
 # Zero if fixed
@@ -108,3 +109,19 @@ all_meta$bams <- lapply(all_meta$RQC.Seq.Unit.Name, gsub, pattern = "fastq.gz", 
 write.csv(all_meta,
           file = paste0("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.", Sys.Date(), ".csv"),
           row.names = F)
+
+##################################################  
+### Files to still download
+##################################################
+
+to_download_df <- jgi_meta[!jgi_meta$RQC.Seq.Unit.Name %in% seq_names,]
+to_download_compl <- to_download_df[to_download_df$Sequencing.Project.Status == "Complete",]
+dim(to_download_compl)
+
+seq_list <- to_download_compl %>%
+  select(RQC.Seq.Unit.Name, Sample.Name) %>% # subset columns
+  filter(RQC.Seq.Unit.Name != "") # some samples don't have a fastq name listed even though complete
+
+dim(seq_list)
+
+write.csv(seq_list, paste0("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/seq_to_download.",Sys.Date(),".csv"), row.names = F)

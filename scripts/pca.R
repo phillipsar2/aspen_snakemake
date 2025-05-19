@@ -14,6 +14,9 @@ library(viridis)
 dir = "/global/scratch/users/arphillips/data/updog/"
 files <- list.files(path = dir, pattern = "updog.genomat.diploid*")
 
+# Exclude 1 and 10
+files <- files[-c(1,10)]
+
 # dir = "/global/scratch/users/arphillips/data/updog/"
 # files_dip <- list.files(path = dir, pattern = "updog.genomat.diploid*")
 # files_trip <- list.files(path = dir, pattern = "updog.genomat.triploid*")

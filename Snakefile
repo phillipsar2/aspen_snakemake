@@ -7,6 +7,10 @@ import datetime
 SAMPLE = glob_wildcards("/global/scratch/users/arphillips/raw/jgi_wgs/{sample}.fastq.gz").sample
 #print(SAMPLE)
 
+# Other poplar samples (filenames)
+OTHER_POP = glob_wildcards("/global/scratch/users/arphillips/raw/other_poplars/{other_pop}_1.fastq.gz").other_pop
+#print(OTHER_POP)
+
 # BAMs to process
 BAM = glob_wildcards("/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam").bam 
 
@@ -33,10 +37,14 @@ rule all:
     input:
       ## Mapping
         #fastqc = expand("/global/scratch/users/arphillips/qc/fastqc/{sample}_fastqc.zip", sample = SAMPLE),
-        fastp = expand("/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz" , sample = SAMPLE),
+#        fastp = expand("/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz" , sample = SAMPLE),
         bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam", sample = SAMPLE),
         bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt", sample = SAMPLE)
 #        mapdamage = expand("/global/scratch/users/arphillips/reports/mapdamage/{bams}/5pCtoT_freq.txt", bams = BAM)
+      ## Mapping other poplar
+#        mapped = expand("/global/scratch/users/arphillips/data/interm/mapped_bam/{other_pop}.mapped.bam", other_pop = OTHER_POP),
+#        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{other_pop}.dedup.bam", other_pop = OTHER_POP),
+#        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{other_pop}_stats/genome_results.txt", other_pop = OTHER_POP)
       ## Sex
 #        depth = expand("/global/scratch/users/arphillips/data/toz19/{bam}.chr13.cov.txt", bam = BAM),
       ## Calling and filtering

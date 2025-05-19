@@ -100,7 +100,8 @@ rule add_rg:
     input:
         "/global/scratch/users/arphillips/data/interm/sorted_bam/{sample}.sorted.bam"
     output:
-        bam = temp(touch("/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bam"))
+        bam = temp(touch("/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bam")),
+        bai = temp("/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bai")
     params:
         tmp = "/global/scratch/users/arphillips/temp/addrg/{sample}",
         sample = "{sample}",
@@ -127,7 +128,8 @@ rule add_rg:
 # (6) Mark duplicates
 rule mark_dups:
     input:
-        "/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bam"
+        bam = "/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bam",
+        bai = "/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bai"
     output:
 #        bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam"
         bam = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam",
@@ -142,7 +144,7 @@ rule mark_dups:
         mkdir -p {params.tmp}
         # Input bam file to output marked records. Assume bam file has been sorted. Direct to a temporary storage file (scratch).
         gatk --java-options ""-Xmx10G"" MarkDuplicates \
-        -I {input} \
+        -I {input.bam} \
         -O {output.bam} \
         --CREATE_INDEX true \
         -MAX_FILE_HANDLES 1000 \
