@@ -18,17 +18,22 @@ rule mpileup:
     input:
         ref = config["data"]["reference"]["genome"],
 #        bamlist = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{date}.bamlist.txt", date = DATE) 
-        bamlist = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/bamlist.05062025.txt"
+#        bamlist = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/aspen1222.bamlist.txt"
+        bam = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.dedup.bam"
     output:
-        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.raw.vcf.gz"
-    params:
-        chr = "{chr}"
+        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{bam}.raw.vcf.gz"
+#    params:
+#        chr = "{chr}"
 #    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/bcftools.yaml"
 #    benchmark:
 #         "/global/scratch/users/arphillips/benchmarks/{chr}.mpileup.benchmark.txt"
     shell:
         """
-        /global/scratch/users/arphillips/toolz/bcftools/bcftools mpileup -Ou -f {input.ref} -b {input.bamlist} -r {params.chr} -A --annotate FORMAT/AD,FORMAT/DP --threads 10 | /global/scratch/users/arphillips/toolz/bcftools/bcftools call -mv -Oz -o {output.vcf}
+        /global/scratch/users/arphillips/toolz/bcftools/bcftools mpileup -Ou \
+        -f {input.ref} {input.bam} \
+        # -b {input.bamlist} -r {params.chr} \
+        -A --annotate FORMAT/AD,FORMAT/DP --threads 2 | \
+        /global/scratch/users/arphillips/toolz/bcftools/bcftools call -mv -Oz -o {output.vcf}
         /global/scratch/users/arphillips/toolz/bcftools/bcftools index -t {output}
         """
 
