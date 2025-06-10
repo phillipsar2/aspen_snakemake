@@ -129,7 +129,7 @@ set-resources:
 
   mpileup:
     threads: 2
-    runtime: 1440
+    runtime: 360
     slurm_partition: "savio4_htc"
 
   # ----------------------------------------------------------------------

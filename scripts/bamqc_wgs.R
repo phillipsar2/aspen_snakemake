@@ -34,7 +34,7 @@ dim(stats)
 
 # Load metadata files
 # Megametadata file from scripts/megametadata.R
-megameta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.2025-04-24.csv")
+megameta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.2025-06-09.csv")
 str(megameta)
 dim(megameta)
 
@@ -221,7 +221,8 @@ exclude_10 <- stats_meta %>%
 write.csv(exclude_10, file = paste0(dir, "/sample_to_redo.", Sys.Date(), ".MQ10.PR90.csv"))
 
 # Write full stats file out 
-out <- stats_meta %>%
-  select(Sequencing.Project.ID,Sample.Name,bams,Sample.type,Sample.Plate.Tube.Name,
-         numreads,medianinsertsize,GC,meancoverage,meanMQ,perreadsmapped,percentdups)
+out <- stats_meta 
+# %>%
+  # select(Sequencing.Project.ID,Sample.Name,bams,Sample.type,Sample.Plate.Tube.Name,
+         # numreads,medianinsertsize,GC,meancoverage,meanMQ,perreadsmapped,percentdups)
 write.csv(out, file = paste0(dir,"/stats.meta.bamqc.", Sys.Date(), ".csv"), row.names = F)

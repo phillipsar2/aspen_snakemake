@@ -12,7 +12,7 @@ OTHER_POP = glob_wildcards("/global/scratch/users/arphillips/raw/other_poplars/{
 #print(OTHER_POP)
 
 # BAMs to process
-BAM = glob_wildcards("/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam").bam 
+BAM = glob_wildcards("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.dedup.bam").bam 
 
 # Chromosomes
 fai =  pd.read_csv("/global/scratch/projects/fc_moilab/projects/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/Populus_tremuloides_var_CAM1604-4_HAP1.mainGenome.fasta.fai", header = None, sep = "\t")

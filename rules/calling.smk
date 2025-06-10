@@ -14,6 +14,7 @@ rule bamlist:
 # -v option asks to output variant sites only (this is sufficient for the analyses we want to run)
 # -r output for only the given region
 # --annotate FORMAT/AD,FORMAT/DP give allele and genotype depths
+# # -b {input.bamlist} -r {params.chr} \
 rule mpileup:
     input:
         ref = config["data"]["reference"]["genome"],
@@ -31,7 +32,6 @@ rule mpileup:
         """
         /global/scratch/users/arphillips/toolz/bcftools/bcftools mpileup -Ou \
         -f {input.ref} {input.bam} \
-        # -b {input.bamlist} -r {params.chr} \
         -A --annotate FORMAT/AD,FORMAT/DP --threads 2 | \
         /global/scratch/users/arphillips/toolz/bcftools/bcftools call -mv -Oz -o {output.vcf}
         /global/scratch/users/arphillips/toolz/bcftools/bcftools index -t {output}
