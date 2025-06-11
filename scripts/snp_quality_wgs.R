@@ -6,7 +6,7 @@ library(dplyr)
 library(ggplot2)
 
 ##############
-### Raw snps
+### Raw snps ----
 ##############
 
 # Load quality table for one chromosome
@@ -66,10 +66,15 @@ dplyr::filter(qual, QUAL > 30, MQ > 30) %>%
 ### Filtering for Depth ----
 ##############
 # Load quality table
-chr <- "Chr01"
-qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.", chr ,".filtered.nocall.table") , header = T)
-head(qual)
-str(qual)
+chr <- "Chr02"
+# qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.", chr ,".filtered.nocall.table") , header = T)
+
+chr_files <- Sys.glob(paste0("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.", chr ,"*.table"))
+chr_list <- lapply(chr_files[1], function(x) read.table(x, header = T))
+qual <- do.call(rbind, chr_list)
+
+# head(qual)
+# str(qual)
 dim(qual)
 
 qual[1:10,1:10]
@@ -113,28 +118,26 @@ par(mfrow=c(4,3)) # mfrow sets max number of plots (rows by columns), automatica
 for (i in 3:dim(qual)[2]) {
   qlist[i-2,] <- quantile(qual[,i], c(.05, .1, .99), na.rm=T)
   d <- density(qual[,i], from=0, to=100, bw=1, na.rm = T)
-  plot(d, xlim = c(0,50), main=rownames(qlist)[i-2], col="blue", lwd=2, xlab = NULL)
+  plot(d, xlim = c(0,50), main=rownames(qlist)[i-2], col="blue", lwd=2, xlab = NULL, cex.main=0.5)
   abline(v=qlist[i-2,c(1,3)], col='red', lwd=3)
 }
 
 dev.off()
 
 # # Test out some depth + missingness filters
-max = 74
-min = 6
+max = 90
+min = 10
 miss = 0.1
 
-test <- qual
+qual[qual < min] <- "NA"
+qual[qual > max] <- "NA"
 
-test[test < min] <- "NA"
-test[test > max] <- "NA"
-
-genos_with_data <- rowSums(is.na(qual[,3:dim(qual)[2]])) # number of genotypes to be removed at each site
-hist(genos_with_data)
+# genos_with_data <- rowSums(is.na(qual[,3:dim(qual)[2]])) # number of genotypes to be removed at each site
+hist(rowSums(is.na(qual[,3:dim(qual)[2]])))
 
 # Depth per site
-site_dp <- rowSums(qual[3:dim(qual)[2]], na.rm = T)
-hist(site_dp, xlim = c(0, 40000))
+# site_dp <- rowSums(qual[3:dim(qual)[2]], na.rm = T)
+# hist(site_dp, xlim = c(0, 40000))
 
 # Genotypes with data (not zero)
 genos_with_data <- rowSums(is.na(qual[,3:dim(qual)[2]]))

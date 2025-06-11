@@ -26,7 +26,7 @@ REGION = list(region_list[0])
 DATE = datetime.datetime.utcnow().strftime("%Y-%m-%d")
 
 # SNP filters
-MAX_DP = ["75"]
+MAX_DP = ["90"]
 MIN_DP = ["10"]
 
 # Ploidy range
@@ -55,8 +55,11 @@ rule all:
 #        merge_raw = expand("/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.raw.merged.vcf.gz", region = REGION)
 #        diag = expand("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{region}.table", region = REGION),
 #        snp = expand("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{chr}.table", chr = REGION),
-        dp_table = expand("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{chr}.filtered.nocall.table", chr = REGION),
+#        dp_table = expand("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{chr}.filtered.nocall.table", chr = REGION),
 #        vcf = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.nocall.{min_dp}dp{max_dp}.vcf", chr = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
+      ## Genotyping
+#        merge_filt = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.nocall.{min_dp}dp{max_dp}.vcf.gz", min_dp = MIN_DP, max_dp = MAX_DP)
+        gbs2ploidy = expand("/global/scratch/users/arphillips/data/gbs2ploidy/{bam}.propOut.csv", bam = BAM)
       ## Plastids
 #        map_plas = expand("/global/scratch/users/arphillips/data/interm/mapped_chl/{sample}.mapped_chl.bam", sample = SAMPLE)
 #        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
@@ -68,7 +71,7 @@ rule all:
 # =================================================================================================
 #include: "rules/mapping.smk"
 #include: "rules/mapping_otherpoplar.smk"
-include: "rules/calling.smk"
+#include: "rules/calling.smk"
 #include: "rules/ploidy_sex.smk"
 #include: "rules/plastid.smk"
-#include: "rules/updog_genotyping.smk"
+include: "rules/updog_genotyping.smk"

@@ -38,7 +38,7 @@ printshellcmds: True
 #     Default Resources
 # =================================================================================================
 default-resources:
-  slurm_partition: "savio3_htc" 
+  slurm_partition: "savio4_htc" 
   slurm_account:  "fc_moilab"
   runtime: 300
   cores: 1
@@ -132,6 +132,26 @@ set-resources:
     threads: 2
     runtime: 360
     slurm_partition: "savio4_htc"
+
+  # ----------------------------------------------------------------------
+  #     merge filtered vcfs
+  # ----------------------------------------------------------------------
+
+  merge_filt:
+    cpus_per_task: 10
+    mem_mb: 91400
+    slurm_partition: "savio4_htc"
+    runtime: 720
+
+  # ----------------------------------------------------------------------
+  #     gbs2ploidy
+  # ----------------------------------------------------------------------
+
+  gbs2ploidy:
+    cpus_per_task: 1
+    mem_mb: 9600
+    slurm_partition: "savio4_htc"
+    runtime: 720
 
   # ----------------------------------------------------------------------
   #     updog

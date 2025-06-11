@@ -101,7 +101,7 @@ rule filter_snps:
         ref = config["data"]["reference"]["genome"],
         vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.snps.vcf.gz"
     output:
-        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.snps.vcf"
+        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.snps.vcf.gz"
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
@@ -116,9 +116,9 @@ rule filter_snps:
 rule filter_nocall:
     input:
         ref = config["data"]["reference"]["genome"],
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.snps.vcf"
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.snps.vcf.gz"
     output:
-        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf"
+        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf.gz"
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
@@ -128,7 +128,7 @@ rule filter_nocall:
 # (13) Extract genotype depth across samples to determine DP cutoff
 rule depth:
     input:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf.gz",
         ref = config["data"]["reference"]["genome"]
     output:
         "/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{region}.filtered.nocall.table"
@@ -146,11 +146,11 @@ rule depth:
 # (14) Fitlter by depth of each genotype at each site
 rule filter_depth:
     input:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf.gz",
         ref = config["data"]["reference"]["genome"]
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     output:
-        dp = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.depth.{min_dp}dp{max_dp}.vcf"
+        dp = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.depth.{min_dp}dp{max_dp}.vcf.gz"
     params:
         min = "{min_dp}",
         max = "{max_dp}"
@@ -167,10 +167,11 @@ rule filter_depth:
 # (15) Filter snps for genotype missingness (10%)
 rule depth_nocall:
     input:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.depth.{min_dp}dp{max_dp}.vcf",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.depth.{min_dp}dp{max_dp}.vcf.gz",
     output:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.vcf",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.vcf.gz",
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         "gatk SelectVariants -V {input} --exclude-filtered true --max-nocall-fraction 0.1 -O {output}"
+
 
