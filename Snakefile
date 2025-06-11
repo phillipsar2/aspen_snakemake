@@ -17,7 +17,6 @@ BAM = glob_wildcards("/global/scratch/projects/fc_moilab/aphillips/aspen_snakema
 # Chromosomes
 fai =  pd.read_csv("/global/scratch/projects/fc_moilab/projects/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/Populus_tremuloides_var_CAM1604-4_HAP1.mainGenome.fasta.fai", header = None, sep = "\t")
 CHR = list(fai[0])
-#print(CHROM)
 
 # 1 Mb regions
 region_list = pd.read_csv("/global/scratch/projects/fc_moilab/projects/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/chr_regions.txt", header = None, sep = "\t")
@@ -52,9 +51,11 @@ rule all:
       ## Sex
 #        depth = expand("/global/scratch/users/arphillips/data/toz19/{bam}.chr13.cov.txt", bam = BAM),
       ## Calling and filtering
-        raw_vcf = expand("/global/scratch/users/arphillips/data/vcf/wgs_aspen.{bam}.raw.vcf.gz", bam = BAM)
+#        raw_vcf = expand("/global/scratch/users/arphillips/data/vcf/wgs_aspen.{bam}.raw.vcf.gz", bam = BAM)
+#        merge_raw = expand("/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.raw.merged.vcf.gz", region = REGION)
+#        diag = expand("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{region}.table", region = REGION),
 #        snp = expand("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{chr}.table", chr = REGION),
-#        dp_table = expand("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{chr}.filtered.nocall.table", chr = REGION),
+        dp_table = expand("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{chr}.filtered.nocall.table", chr = REGION),
 #        vcf = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.nocall.{min_dp}dp{max_dp}.vcf", chr = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
       ## Plastids
 #        map_plas = expand("/global/scratch/users/arphillips/data/interm/mapped_chl/{sample}.mapped_chl.bam", sample = SAMPLE)

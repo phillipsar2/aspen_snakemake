@@ -1,15 +1,16 @@
-# (7) make bam list
-rule bamlist:
-    input:
-       bams = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.dedup.bam", bam = BAM)
-    output:
-       bamlist = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{date}.bamlist.txt"
-    params:
-       path = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/"
-    shell:
-       "ls {params.path}*bam > {output}"
+# make bam list
+#rule bamlist:
+#    input:
+#       bams = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.dedup.bam", bam = BAM)
+#    output:
+#       bamlist = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{date}.bamlist.txt"
+#    params:
+#       path = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/"
+#    shell:
+#       "ls {params.path}*bam > {output}"
 
-# (8) Call snps initially with bcftools to identify variable sites
+# (7) Call snps initially with bcftools to identify variable sites
+# Call on each bam independently, as bcftools doesn't do joint calling anyway
 # default only sites with max 250 reads considered at each positin, this is way above the max coverage
 # -v option asks to output variant sites only (this is sufficient for the analyses we want to run)
 # -r output for only the given region
@@ -18,35 +19,51 @@ rule bamlist:
 rule mpileup:
     input:
         ref = config["data"]["reference"]["genome"],
-#        bamlist = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{date}.bamlist.txt", date = DATE) 
 #        bamlist = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/aspen1222.bamlist.txt"
         bam = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.dedup.bam"
     output:
         vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{bam}.raw.vcf.gz"
-#    params:
-#        chr = "{chr}"
-#    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/bcftools.yaml"
-#    benchmark:
-#         "/global/scratch/users/arphillips/benchmarks/{chr}.mpileup.benchmark.txt"
     shell:
         """
         /global/scratch/users/arphillips/toolz/bcftools/bcftools mpileup -Ou \
         -f {input.ref} {input.bam} \
         -A --annotate FORMAT/AD,FORMAT/DP --threads 2 | \
-        /global/scratch/users/arphillips/toolz/bcftools/bcftools call -mv -Oz -o {output.vcf}
+        /global/scratch/users/arphillips/toolz/bcftools/bcftools call -mv -Oz -o {output}
         /global/scratch/users/arphillips/toolz/bcftools/bcftools index -t {output}
         """
 
-# (9) Extract SNPs from each vcf
+# (8) Merge sample vcfs into larger vcf by region
+rule vcflist:
+    input:
+        vcfs = expand("/global/scratch/users/arphillips/data/vcf/wgs_aspen.{bam}.raw.vcf.gz", bam = BAM)
+    output:
+        vcflist = "/global/scratch/users/arphillips/data/vcf/vcflist.raw.txt"
+    params:
+        path = "/global/scratch/users/arphillips/data/vcf/"
+    shell:
+        "ls {params.path}*.raw.vcf.gz > {output}"
+
+rule bcftools_merge:
+    input:
+        list = "/global/scratch/users/arphillips/data/vcf/vcflist.raw.txt"
+    output:
+        "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.raw.merged.vcf.gz"
+    params:
+        region = "{region}"
+    shell:
+        "/global/scratch/users/arphillips/toolz/bcftools/bcftools merge -l {input} -r {params} -Oz -o {output}"
+
+# (9) Extract SNPs from each vcf by region
 rule get_snps:
     input:
         ref = config["data"]["reference"]["genome"],
-        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.raw.vcf.gz"
+        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.raw.merged.vcf.gz"
     output:
-         "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.snps.vcf.gz"
+         "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.snps.vcf.gz"
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
+        gatk IndexFeatureFile -I {input.vcf}
         gatk SelectVariants \
         -R {input.ref} \
         -V {input.vcf} \
@@ -60,10 +77,10 @@ rule get_snps:
 # Extract alternate base quality (QUAL), mapping quality (MQ), and total depth at the site (DP)
 rule diagnostics:
     input:
-        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.snps.vcf.gz",
+        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.snps.vcf.gz",
         ref = config["data"]["reference"]["genome"]
     output:
-        "/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{chr}.table"
+        "/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{region}.table"
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
@@ -82,9 +99,9 @@ rule diagnostics:
 rule filter_snps:
     input:
         ref = config["data"]["reference"]["genome"],
-        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{chr}.snps.vcf.gz"
+        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.snps.vcf.gz"
     output:
-        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.filtered.snps.vcf"
+        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.snps.vcf"
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
@@ -99,9 +116,9 @@ rule filter_snps:
 rule filter_nocall:
     input:
         ref = config["data"]["reference"]["genome"],
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.filtered.snps.vcf"
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.snps.vcf"
     output:
-        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.filtered.nocall.vcf"
+        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf"
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
@@ -111,10 +128,10 @@ rule filter_nocall:
 # (13) Extract genotype depth across samples to determine DP cutoff
 rule depth:
     input:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.filtered.nocall.vcf",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf",
         ref = config["data"]["reference"]["genome"]
     output:
-        "/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{chr}.filtered.nocall.table"
+        "/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{region}.filtered.nocall.table"
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
@@ -129,11 +146,11 @@ rule depth:
 # (14) Fitlter by depth of each genotype at each site
 rule filter_depth:
     input:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.filtered.nocall.vcf",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf",
         ref = config["data"]["reference"]["genome"]
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     output:
-        dp = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.depth.{min_dp}dp{max_dp}.vcf"
+        dp = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.depth.{min_dp}dp{max_dp}.vcf"
     params:
         min = "{min_dp}",
         max = "{max_dp}"
@@ -150,9 +167,9 @@ rule filter_depth:
 # (15) Filter snps for genotype missingness (10%)
 rule depth_nocall:
     input:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.depth.{min_dp}dp{max_dp}.vcf",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.depth.{min_dp}dp{max_dp}.vcf",
     output:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.nocall.{min_dp}dp{max_dp}.vcf",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.vcf",
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         "gatk SelectVariants -V {input} --exclude-filtered true --max-nocall-fraction 0.1 -O {output}"

@@ -11,9 +11,15 @@ library(ggplot2)
 
 # Load quality table for one chromosome
 chr <- "Chr01"
-qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.", chr ,".table") , header = T)
-head(qual)
-dim(qual)
+# qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.", chr ,".table") , header = T)
+# head(qual)
+# dim(qual)
+
+chr_files <- Sys.glob(paste0("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.", chr ,"*.table"))
+chr_list <- lapply(chr_files, function(x) read.table(x, header = T))
+qual <- do.call(rbind, chr_list)
+
+genos = "1207"
 
 pdf(paste0("/global/scratch/users/arphillips/reports/filtering/alignment_quality.", Sys.Date(), ".", chr ,".pdf"))
 
