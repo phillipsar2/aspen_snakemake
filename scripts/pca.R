@@ -14,9 +14,6 @@ library(viridis)
 dir = "/global/scratch/users/arphillips/data/updog/"
 files <- list.files(path = dir, pattern = "updog.genomat.diploid*")
 
-# Exclude 1 and 10
-files <- files[-c(1,10)]
-
 # dir = "/global/scratch/users/arphillips/data/updog/"
 # files_dip <- list.files(path = dir, pattern = "updog.genomat.diploid*")
 # files_trip <- list.files(path = dir, pattern = "updog.genomat.triploid*")
@@ -40,21 +37,34 @@ paste0("Starting SNPs: ",dim(genos)[1])
 # 
 # genos_trip_sub <- genos_trip[,88:175]
 
+# (1b) read in genotypes from bcftools filtered vcfs ----
+# vcf_files <- Sys.glob("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.*.nocall.10dp90.vcf")
+# gt_list <- lapply(vcf_files, function(x){
+#   vcf <- read.vcfR(x, verbose = F)
+#   extract.gt(vcf)
+# } )
+# gt_mat <- do.call(rbind, gt_list)
+# dim(gt_mat)
+
+vcf <- read.vcfR("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.nocall.10dp90.vcf.gz")
+gt <- extract.gt(vcf)
+rm(vcf)
+
 # (2) Load in metadata ----
-meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.2025-02-24.csv")
+meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.2025-06-09.csv")
 str(meta)
 dim(meta)
 
-cov <- read.table("/global/scratch/users/arphillips/reports/bamqc/stats.bamqc.txt", header = F) %>%
-  select(V1, V7)
-names(cov) <- c("bams", "cov")
-# cov$cov <- gsub(cov$cov, pattern = "X", replacement = "") %>% as.numeric
-cov$bams <- str_split(cov$bams, pattern = "/", simplify=T)[,9] 
-head(cov)
-
-meta_cov <- merge(meta, cov, by = "bams", all = T )
-head(meta_cov)
-dim(meta_cov)
+# cov <- read.table("/global/scratch/users/arphillips/reports/bamqc/stats.bamqc.txt", header = F) %>%
+#   select(V1, V7)
+# names(cov) <- c("bams", "cov")
+# # cov$cov <- gsub(cov$cov, pattern = "X", replacement = "") %>% as.numeric
+# cov$bams <- str_split(cov$bams, pattern = "/", simplify=T)[,9] 
+# head(cov)
+# 
+# meta_cov <- merge(meta, cov, by = "bams", all = T )
+# head(meta_cov)
+# dim(meta_cov)
 
 # (3) Prep the data ----
 ## Merge dataframes to shared sites
@@ -75,27 +85,6 @@ is.na(genos) %>% sum
 hist(as.matrix(genos))
 
 # (4) LD thin ----
-## The naive LD estimates (using just sample moments) with the posterior mean
-# mom_ld <- mldest(geno = as.matrix(genos)[1:1000,], K = 2, type = "comp")
-# plot(mom_ld)
-# mom_ld$chri <- str_split(mom_ld$snpi, pattern = "_", simplify = T)[,1]
-# mom_ld$chrj <- str_split(mom_ld$snpj, pattern = "_", simplify = T)[,1]
-# mom_ld$posi <- str_split(mom_ld$snpi, pattern = "_", simplify = T)[,2]
-# mom_ld$posj <- str_split(mom_ld$snpj, pattern = "_", simplify = T)[,2]
-# 
-# mom_ld %>%
-#   dplyr::filter(chri == "Chr01") %>% 
-#   dplyr::filter(chrj == "Chr01") %>%
-#   ggplot(aes(x = posi, y = posj, color = r2)) +
-#   geom_tile() +
-#   scale_color_viridis()
-  
-
-# dist <- abs(as.numeric(mom_ld$posi[mom_ld$r2 > 0.9]) - as.numeric(mom_ld$posj[mom_ld$r2 > 0.9]))/1000
-# hist(dist, breaks = 50, xlab = "Kbp")
-# 50*1000
-
-## Alternative option is to thin by position
 ## Thin SNPs by one every 500 bp
 # genos <- genos[grep("Chr02", rownames(genos)), ] # subset to one grom
 
@@ -118,13 +107,24 @@ genos_thin <- filter(as.data.frame(genos), row.names(genos) %in% keep_pos$chr_po
 paste0("Number of SNPs after thinning: ", dim(genos_thin)[1])
 
 # (5) MAF filter ----
+## convert genotypes if from vcf not updog
+# genos_thin_cont <- apply(genos_thin, c(1,2), function(x) {
+#   if (is.na(x)){      # is.na needs to be the first test
+#     "<NA>"               # assign to homozygous ref and remove the first alleles
+#   } else if (x == "0/0"){
+#     "0" 
+#   } else if (x == "0/1"){
+#     "1"
+#   } else if (x == "1/1"){
+#     "2"}})
+
 ## not right for mixed-ploidy pops
 hist(as.matrix(genos_thin)[,2])
-q2 <- rowSums(genos_thin == 0) / dim(genos_thin)[2] # q^2, minor allele
+q2 <- rowSums(genos_thin == 0, na.rm = T) / dim(genos_thin)[2] # q^2, minor allele
 af <- sqrt(q2)
 hist(as.matrix(af))
 
-genos_maf <- genos_thin[af > 0.05 & af < 1,]
+genos_maf <- genos_thin[af > 0.05 & af < 0.95,]
 dim(genos_maf)
 paste0("Number of SNPs after MAF & invariant site filter: ", dim(genos_maf)[1])
 
@@ -220,3 +220,140 @@ ggplot(pca_df, aes(y = Latitude, x = Longitude, color = PC2)) +
   geom_point(alpha = 0.7) +
   theme_bw() +
   scale_color_viridis(option = "C")
+
+
+####### PLINK PCA ----
+library(tidyverse)
+library(ggpubr)
+
+pca <- read_table("/global/scratch/users/arphillips/data/pca/wgs_aspen.all.10dp90.thin.eigenvec", col_names = FALSE)
+eigenval <- scan("/global/scratch/users/arphillips/data/pca/wgs_aspen.all.10dp90.thin.eigenval")
+
+# sort out the pca data
+# remove nuisance column
+pca <- pca[,-1]
+# set names
+names(pca)[1] <- "ind"
+names(pca)[2:ncol(pca)] <- paste0("PC", 1:(ncol(pca)-1))
+
+# Sort metadata
+# (2) Load in metadata ----
+# meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.2025-06-09.csv")
+meta <- read.csv("/global/scratch/users/arphillips/reports/bamqc/stats.meta.bamqc.2025-06-11.csv")
+str(meta)
+dim(meta)
+
+# geno_names <- pca$ind
+meta$seqnames <- gsub(meta$bams, pattern = ".dedup.bam", replacement = "") %>% sort()
+
+pca_df <- merge(x = pca, y = meta, by.x = "ind", by.y = "seqnames")
+dim(pca_df)
+
+# first convert to percentage variance explained
+pve <- data.frame(PC = 1:20, pve = eigenval/sum(eigenval)*100)
+
+# make plot
+a <- ggplot(pve, aes(PC, pve)) + geom_bar(stat = "identity")
+a + ylab("Percentage variance explained") + theme_light()
+
+# calculate the cumulative sum of the percentage variance explained
+cumsum(pve$pve)
+
+# remake data.frame
+# pca <- as.tibble(data.frame(pca, spp, loc, spp_loc))
+
+# plot pca
+pca_p <- ggplot(pca_df, aes(PC1, PC2, col = Latitude)) + 
+  geom_point(size = 3) +
+  theme_bw() + 
+  xlab(paste0("PC1 (", signif(pve$pve[1], 3), "%)")) + 
+  ylab(paste0("PC2 (", signif(pve$pve[2], 3), "%)")) +
+  scale_color_viridis()
+
+ggsave(pca_p, filename = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/figures/pca.1206.plink.pdf", 
+       width = 5, height = 4, unit = "in")
+
+ggplot(pca_df, aes(PC1, PC2, col = Longitude)) + 
+  geom_point(size = 3) +
+  theme_bw() + 
+  xlab(paste0("PC1 (", signif(pve$pve[1], 3), "%)")) + 
+  ylab(paste0("PC2 (", signif(pve$pve[2], 3), "%)")) +
+  scale_color_viridis(option = "C")
+
+# ggplot(pca_df, aes(y = Latitude, x = Longitude, color = PC1)) +
+#   geom_point(alpha = 0.7) +
+#   theme_bw() +
+#   scale_color_viridis()
+# 
+# ggplot(pca_df, aes(y = Latitude, x = Longitude, color = PC2)) +
+#   geom_point(alpha = 0.7) +
+#   theme_bw() +
+#   scale_color_viridis(option = "C")
+# 
+# ggplot(pca_df, aes(y = Latitude, x = Longitude, color = PC3)) +
+#   geom_point(alpha = 0.7) +
+#   theme_bw() +
+#   scale_color_viridis(option = "F")
+
+## Map
+library(raster)
+library(sf)
+library(ggplot2)
+library(ggspatial)
+library(USAboundaries)
+library(purrr)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ggpubr)
+
+north_america <- ne_countries(continent = "North America", returnclass = "sf")
+# states <- us_states()
+
+events_sf <- pca_df %>% 
+  st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) 
+dim(events_sf)
+
+# events_sf$ploidy <- unique(sv_sub_pl[,c(3,12:13)])$ploidy_call
+
+pc1_p <- ggplot() + 
+  geom_sf(data = north_america, size = 4, color = "black", fill = NA) +
+  geom_sf(data = events_sf, size = 3, aes(color = PC1), alpha = 0.5) +
+  theme_bw() +
+  theme(panel.grid = element_blank(), 
+        axis.line = element_blank(),
+  ) + 
+  ylim(c(10,70)) +
+  xlim(c(165, 57)) +
+  scale_color_viridis()
+
+pc2_p <- ggplot() + 
+  geom_sf(data = north_america, size = 4, color = "black", fill = NA) +
+  geom_sf(data = events_sf, size = 3, aes(color = PC2), alpha = 0.5) +
+  theme_bw() +
+  theme(panel.grid = element_blank(), 
+        y.axis.text = element_blank(),
+        axis.line = element_blank(),
+  ) + 
+  ylim(c(10,70)) +
+  xlim(c(165, 57)) +
+  scale_color_viridis(option = "C")
+
+pc3_p <- ggplot() + 
+  geom_sf(data = north_america, size = 4, color = "black", fill = NA) +
+  geom_sf(data = events_sf, size = 3, aes(color = PC3), alpha = 0.5) +
+  theme_bw() +
+  theme(panel.grid = element_blank(), 
+        # axis.text = element_blank(),
+        axis.line = element_blank(),
+        # axis.ticks = element_blank(),
+        # legend.title = element_blank(),
+        # legend.text = element_blank()
+  ) + 
+  ylim(c(10,70)) +
+  xlim(c(165, 57)) +
+  scale_color_viridis(option = "F")
+
+pcs_p <- ggarrange(pc1_p, pc2_p, ncol = 2, nrow = 1)
+
+ggsave(pcs_p, filename = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/figures/pcamap.1206.plink.pdf", 
+       width = 10, height = 5, unit = "in")

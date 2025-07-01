@@ -17,7 +17,7 @@ rule merge_filt:
 # (19) Determine ploidy with gbs2ploidy
 rule gbs2ploidy:
     input:
-        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.depth.{min_dp}dp{max_dp}.vcf.gz"
+        expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.nocall.{min_dp}dp{max_dp}.vcf.gz", min_dp = MIN_DP, max_dp = MAX_DP)
     output:
         "/global/scratch/users/arphillips/data/gbs2ploidy/{bam}.propOut.csv"
     params:
