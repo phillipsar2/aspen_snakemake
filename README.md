@@ -51,6 +51,7 @@ The directory roughly follows a CookieCutter directory structure.
 * Map reads to the reference with bwa-mem2
 * Sort, add read groups, and deduplicate BAM files with samtools and GATK.
 * Assess mapping quality with qualimap's bamqc
+* Assess the DNA damage AdDeam
 * Likely need to merge bam files from multiple sequencing runs of the same genotype
 
 3. Extracting plastid genome reads

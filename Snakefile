@@ -44,6 +44,7 @@ rule all:
 #        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam", sample = SAMPLE),
 #        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt", sample = SAMPLE)
 #        mapdamage = expand("/global/scratch/users/arphillips/reports/mapdamage/{bams}/5pCtoT_freq.txt", bams = BAM)
+        addeam = "/global/scratch/users/arphillips/reports/addeam/plots/damage_report_k3.pdf"
       ## Mapping other poplar
 #        mapped = expand("/global/scratch/users/arphillips/data/interm/mapped_bam/{other_pop}.mapped.bam", other_pop = OTHER_POP),
 #        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{other_pop}.dedup.bam", other_pop = OTHER_POP),
@@ -59,7 +60,7 @@ rule all:
 #        vcf = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{chr}.nocall.{min_dp}dp{max_dp}.vcf", chr = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
       ## Genotyping
 #        merge_filt = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.nocall.{min_dp}dp{max_dp}.vcf.gz", min_dp = MIN_DP, max_dp = MAX_DP)
-        gbs2ploidy = expand("/global/scratch/users/arphillips/data/gbs2ploidy/{bam}.propOut.csv", bam = BAM)
+#        gbs2ploidy = expand("/global/scratch/users/arphillips/data/gbs2ploidy/{bam}.propOut.csv", bam = BAM)
       ## Plastids
 #        map_plas = expand("/global/scratch/users/arphillips/data/interm/mapped_chl/{sample}.mapped_chl.bam", sample = SAMPLE)
 #        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
@@ -69,9 +70,9 @@ rule all:
 # =================================================================================================
 #     Rule Modules
 # =================================================================================================
-#include: "rules/mapping.smk"
+include: "rules/mapping.smk"
 #include: "rules/mapping_otherpoplar.smk"
 #include: "rules/calling.smk"
 #include: "rules/ploidy_sex.smk"
 #include: "rules/plastid.smk"
-include: "rules/updog_genotyping.smk"
+#include: "rules/updog_genotyping.smk"

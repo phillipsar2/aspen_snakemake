@@ -196,7 +196,27 @@ rule mapdamage:
     params:
         outdir = "/global/scratch/users/arphillips/reports/mapdamage/{bam}"
     conda: "/global/home/users/arphillips/.conda/envs/mapdamage"
-    benchmark:
-        "/global/scratch/users/arphillips/benchmarks/{bam}.mapdamage.benchmark.txt"
+#    benchmark:
+#        "/global/scratch/users/arphillips/benchmarks/{bam}.mapdamage.benchmark.txt"
     shell:
          "mapDamage -i {input.bam} -r {input.ref} -d {params.outdir}"
+
+# (8a) Assess DNA damage with AdDeam
+rule addeam:
+    input:
+        bams = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.dedup.bam", bam = BAM) 
+    output:
+        plot = "/global/scratch/users/arphillips/reports/addeam/plots/damage_report_k3.pdf"
+    params:
+        path = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/",
+        bamlist = "/global/scratch/users/arphillips/reports/addeam/profiles/bamlist.txt",
+        profilesDir = "/global/scratch/users/arphillips/reports/addeam/profiles",
+        plotsDir = "/global/scratch/users/arphillips/reports/addeam/plots"
+    shell:
+        """
+        mkdir -p {params.profilesDir}
+        mkdir -p {params.plotsDir}
+        ls {params.path}*bam > {params.bamlist}
+        python /global/scratch/users/arphillips/toolz/AdDeam/addeam-bam2prof.py -classic -minAligned 1000000  -bam2profpath /global/scratch/users/arphillips/toolz/bam2prof/src/bam2prof -threads 20 -o {params.profilesDir} {params.bamlist}
+        python /global/scratch/users/arphillips/toolz/AdDeam/addeam-cluster.py -i {params.profilesDir} -o {params.plotsDir}
+        """
