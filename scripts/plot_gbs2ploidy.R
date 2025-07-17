@@ -77,18 +77,41 @@ filter(propOut_df, sample %in% duplicates) %>%
 ## Keep samples with over 4 wins
 winner_num <- winner_num[winner_num$Count >= 4,]
 
-# Assess quality stats ----
+# Write class to file
+write.csv(winner_num[,c(1,4)], paste0(dir, "flow_cyt_predictions.csv"))
 
-## Read in metadata from bamqc
+winner_num <- read.csv(paste0(dir, "flow_cyt_predictions.csv"))
+
+# Compare calls to sequence data quality to assess bias ----
+
+# (1) Coverage
+### Read in metadata from bamqc
 meta <- read.csv("/global/scratch/users/arphillips/reports/bamqc/stats.meta.bamqc.2025-06-11.csv")
 meta$seqnames <- gsub(meta$bams, pattern = ".dedup.bam", replacement = "") %>% sort()
 
 winner_df <- merge(x = winner_num, y = meta, by.x = "sample", by.y = "seqnames")
 dim(winner_df)
 
-## Plot winner vs depth
+
+
+### Plot winner vs depth
 ggplot(winner_df, aes(x = ploidy_call, y = meancoverage)) +
   geom_boxplot()
+
+# (2) Depth at individual SNPs
+library("data.table")
+library(stringr)
+file = "/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.all.readdepth.table"
+header <- read.table(file,             
+                     head = TRUE,
+                     nrows = 1)
+header <- colnames(header)
+header <- gsub(pattern = "X", replacement = "", header)
+
+dp_cols <- grep(pattern = ".DP",colnames(header))
+ad_cols <- grep(pattern = ".AD",colnames(header))
+
+dp <- fread(file, select = colnames(header[dp_cols[1]]))
 
 ## PCA & DA to assign ploidies
 # library(gbs2ploidy)
@@ -112,23 +135,33 @@ library(rnaturalearth)
 library(rnaturalearthdata)
 
 north_america <- ne_countries(continent = "North America", returnclass = "sf")
+states <- us_states()
 # states <- us_states()
 
+# ca_samples <- read.table("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/california.samples.txt")
+
 events_sf <- winner_df %>% 
+  # filter(seqname %in% ca_samples[,1]) %>%
   st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) 
 dim(events_sf)
 
 ploidy_map <- ggplot() + 
   geom_sf(data = north_america, size = 4, color = "black", fill = NA) +
-  geom_sf(data = events_sf, size = 3, aes(color = ploidy_call), alpha = 0.4) +
+  geom_sf(data = states, size = 4, fill = NA, color = "black") +
+  geom_sf(data = events_sf, size = 2, aes(color = ploidy_call, shape = ploidy_call), alpha = 0.5) +
   theme_bw() +
   theme(panel.grid = element_blank(), 
         axis.line = element_blank(),
   ) + 
-  ylim(c(10,70)) +
-  xlim(c(165, 57)) +
+  # ylim(c(10,70)) +
+  # xlim(c(165, 57)) +
+  ylim(c(30,50)) +
+  xlim(c(130, 110)) +
   scale_color_manual(values = c("blue", "red") ) +
-  labs(color = "Ploidy")
+  labs(color = "Ploidy") +
+  guides(shape = "none")
 
+ggsave(ploidy_map, filename = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/figures/ploidymap.CA.jpg",
+       width = 4, height = 6, unit = "in")
 ggsave(ploidy_map, filename = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/figures/ploidymap.1206.pdf", 
        width = 6, height = 5, unit = "in")
