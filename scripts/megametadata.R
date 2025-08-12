@@ -90,6 +90,25 @@ jgi_sub_ordered$Sample.Name[!jgi_sub_ordered$Sample.Name %in% ben_meta$ID] <- fi
 # Zero if fixed
 length(jgi_sub_ordered$Sample.Name[!jgi_sub_ordered$Sample.Name %in% ben_meta$ID])
 
+# Check for NAs in Sample.Name
+sum(is.na(jgi_sub_ordered$Sample.Name)) 
+jgi_sub_ordered$Final.Deliverable.Project.Name[is.na(jgi_sub_ordered$Sample.Name)]
+truenames <- c(
+  "AB1",
+  "AB6",
+  "AB10",
+  "AB3-2",
+  "ESSI-004-1",
+  "ESSI-004-3",
+  "FORE-004-1",
+  "QB7",
+  "ESSI-002-1",
+  "SP-45"
+)
+
+jgi_sub_ordered$Sample.Name[is.na(jgi_sub_ordered$Sample.Name)] <- truenames
+sum(is.na(jgi_sub_ordered$Sample.Name)) # should be zero
+
 # Meta sub (duplicates will be represented by one line)
 ben_sub <- ben_meta[ben_meta$ID %in% jgi_sub_ordered$Sample.Name,]
 dim(ben_sub)
@@ -108,6 +127,67 @@ all_meta$bams <- lapply(all_meta$RQC.Seq.Unit.Name, gsub, pattern = "fastq.gz", 
 # Write meta data
 write.csv(all_meta,
           file = paste0("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.", Sys.Date(), ".csv"),
+          row.names = F)
+
+##################################################  
+### Add quality metrics
+##################################################
+
+# (1) bamqc metrics
+bamqc <- read.csv("/global/scratch/users/arphillips/reports/bamqc/stats.meta.bamqc.2025-06-11.csv")
+dim(bamqc)
+str(bamqc)
+
+# (2) ploidy calls
+gbs2ploidy <- read.csv("/global/scratch/users/arphillips/data/gbs2ploidy/flow_cyt_predictions2025-07-17.csv")
+gbs2ploidy$ploidy_call <- as.factor(gbs2ploidy$ploidy_call)
+dim(gbs2ploidy)
+str(gbs2ploidy)
+
+# (3) Percent missing SNPs per genotype (VCF)
+miss <- read.table("/global/scratch/users/arphillips/reports/wgs_aspen.all.10dp90.imiss", header = T)
+dim(miss)
+
+# Merge two datasets
+tmp <- merge(bamqc[,83:91], gbs2ploidy[,2:3], by.x = "seqname", by.y = "sample")
+stats <- merge(tmp, miss[,c(1,5)], by.x = "seqname", by.y = "INDV")
+dim(stats)
+
+# Add file ending
+stats$seqname <- paste0(stats$seqname, ".fastq.gz")
+
+# Merge with megametadata
+all_meta_stats <- merge(all_meta, stats, by.x = "RQC.Seq.Unit.Name", by.y = "seqname")
+dim(all_meta_stats)
+
+# Check for duplicate fastq files
+duplicates <- all_meta_stats$RQC.Seq.Unit.Name[duplicated(all_meta_stats$RQC.Seq.Unit.Name)]
+all_meta_stats <- all_meta_stats[!duplicated(all_meta_stats$RQC.Seq.Unit.Name),]
+dim(all_meta_stats)
+
+# Check for duplicate samples (sequenced multiple time)
+sum(duplicated(all_meta_stats$Sample.Name))
+seq_duplicates <- all_meta_stats$Sample.Name[duplicated(all_meta_stats$Sample.Name)]
+duplicated_samples <- all_meta_stats[all_meta_stats$Sample.Name %in% seq_duplicates,] 
+# write.table(duplicated_samples, "/global/scratch/users/arphillips/reports/filestomerge_or_resolve.08112025.txt")
+
+dup_df <- matrix(nrow = length(unique(duplicated_samples$Sample.Name)), ncol = 3)
+dup_df[,1] <- unique(duplicated_samples$Sample.Name)
+for (i in unique(duplicated_samples$Sample.Name)){
+  dup_df[dup_df[,1] == i, 2:3] <- all_meta_stats$RQC.Seq.Unit.Name[all_meta_stats$Sample.Name == i]
+}
+
+colnames(dup_df) <- c("Genotype", "Merge_A", "Merge_B")
+
+write.table(dup_df, "/global/scratch/users/arphillips/reports/filestomerge.08122025.txt", 
+            row.names = F)
+
+View(all_meta_stats[all_meta_stats$Sample.Name %in% seq_duplicates,] )
+
+# Write megametadata_quality file
+
+write.csv(all_meta_stats,
+          file = paste0("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata_quality.", Sys.Date(), ".csv"),
           row.names = F)
 
 ##################################################  

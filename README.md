@@ -59,18 +59,34 @@ The directory roughly follows a CookieCutter directory structure.
 * `samtools sort` was used to sort BAM files
 * `samtools fastq` was used to convert BAMs back to fastq files, excluding unmapped reads and singletons. Pair-end reads were seperated into two files
 
-3. Variant calling and filtering
+4. Variant calling and filtering
 * Variants are initially called with bcftools mpileup. Quality of SNPs is assed between each filtering step.
 	Raw variants: 62,636,412 (n = 174)
                       108,998,228 (n = 1,206) 
 * Variants are hard filtered for biallelic sites, MQ > 40, and QUAL > 40.
 	SNPs after hard filtering: 44,460,731 (n = 174)
                    		   61,392,826 (n = 1,206)
-* Variants are then filtered: 
+* Variants are then filtered for: 
         10 < DP < 75 & less than 10% missing data: 465,991 (n = 174)
         10 < DP < 90 & less than 10% missing data: 547,124 (n = 1,206) 
+* Multiple LD filters were assessed:
+	+ one SNP per 500 bp
+	+ LD thinning with PLINK with r^2 threshold of 0.1
+	+ Estimation of LD with `ldsep`
 
-4. Determining sex
+5. Ploidy determination
+* Ploidy was determined using `gbs2ploidy`
+* Heterozygous sites from the filtered vcf were used (without LD filter applied)
+* The allele ratio with the highest posterior probability was used to assign ploidy (`data/gbs2ploidy/flow_cyt_predictions.csv`)
+* Quality of the ploidy calls were assessed by TO-DO
+
+6. Genotyping
+* `updog` was used for genotyping with dosage specified by the called ploidy 
+
+X. Population structure
+* 
+
+X. Determining sex
 * The TOZ19 sex locus region was identified by mapping the *P. trichocarpa* genomic sequence to the reference with minimap2 (the reference is Male)
 * The sex-linked region was identified by mapping the *P. tremuloides* concensus sequence from Pakull et al. (2014) to the reference with minimap2 and blastn using the scripts `scripts/blastn_TOZ19.sh` and  `scripts/minimap_TOZ19.sh`
 * Samtools depth is used to extract the per-bp coverage of the TOZ19 region and then mean coverage of the region is calculated.

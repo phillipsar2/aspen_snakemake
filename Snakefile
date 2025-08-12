@@ -33,6 +33,12 @@ MIN_DP = ["10"]
 GENOTYPE_PLOIDY = ["2", "3"]
 PLOIDY = ["diploid", "triploid"]
 
+# MERGE contains a list of the bams that belong to each genotype (GENO) so they can be merged
+file = pd.read_csv("/global/scratch/users/arphillips/reports/filestomerge.08122025.txt", sep = "\t", header = 0)
+MERGE_A = list(file.Merge_A)
+MERGE_B = list(file.Merge_B)
+GENO = list(file.Genotype)
+
 # =================================================================================================
 #     Target Rules
 # =================================================================================================
@@ -43,8 +49,8 @@ rule all:
 #        fastp = expand("/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz" , sample = SAMPLE),
 #        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam", sample = SAMPLE),
 #        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt", sample = SAMPLE)
-#        mapdamage = expand("/global/scratch/users/arphillips/reports/mapdamage/{bams}/5pCtoT_freq.txt", bams = BAM)
-        addeam = "/global/scratch/users/arphillips/reports/addeam/plots/damage_report_k3.pdf"
+#        addeam = "/global/scratch/users/arphillips/reports/addeam/plots/damage_report_k3.pdf"
+        merge_bams = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/data/interm/mark_dups/{merge_A}.{merge_B}.merged.dedup.bam", merge_A = MERGE_A, merge_B = MERGE_B)
       ## Mapping other poplar
 #        mapped = expand("/global/scratch/users/arphillips/data/interm/mapped_bam/{other_pop}.mapped.bam", other_pop = OTHER_POP),
 #        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{other_pop}.dedup.bam", other_pop = OTHER_POP),

@@ -185,23 +185,7 @@ rule bamqc:
         rm -r {params.dir}/css  {params.dir}/qualimapReport.html {params.dir}/images_qualimapReport  {params.dir}/raw_data_qualimapReport
         """
 
-# (8) Assess DNA damage with mapDamage
-rule mapdamage:
-    input:
-        bam = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam",
-#        bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{bam}.dedup.bam",
-        ref = config["data"]["reference"]["genome"]
-    output:
-        "/global/scratch/users/arphillips/reports/mapdamage/{bam}/5pCtoT_freq.txt"
-    params:
-        outdir = "/global/scratch/users/arphillips/reports/mapdamage/{bam}"
-    conda: "/global/home/users/arphillips/.conda/envs/mapdamage"
-#    benchmark:
-#        "/global/scratch/users/arphillips/benchmarks/{bam}.mapdamage.benchmark.txt"
-    shell:
-         "mapDamage -i {input.bam} -r {input.ref} -d {params.outdir}"
-
-# (8a) Assess DNA damage with AdDeam
+# (8) Assess DNA damage with AdDeam
 rule addeam:
     input:
         bams = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.dedup.bam", bam = BAM) 
@@ -219,4 +203,35 @@ rule addeam:
         ls {params.path}*bam > {params.bamlist}
         python /global/scratch/users/arphillips/toolz/AdDeam/addeam-bam2prof.py -classic -minAligned 1000000  -bam2profpath /global/scratch/users/arphillips/toolz/bam2prof/src/bam2prof -threads 20 -o {params.profilesDir} {params.bamlist}
         python /global/scratch/users/arphillips/toolz/AdDeam/addeam-cluster.py -i {params.profilesDir} -o {params.plotsDir}
+        """
+
+# (9) Merge BAMs from the same sample
+rule merge_bams:
+    input:
+        A = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/data/interm/mark_dups/{merge_A}.dedup.bam",
+        B = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/data/interm/mark_dups/{merge_B}.dedup.bam"
+    output:
+        "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/data/interm/mark_dups/{merge_A}.{merge_B}.merged.dedup.bam"
+    params:
+        tmp = "/global/scratch/users/arphillips/tmp/merge_bams/{merge_A}_{merge_B}",
+        sort = "/globial/scratch/users/arphillips/tmp/merge_bams/{merge_A}_{merge_B}/{merge_A}.{merge_B}.merged.sorted.bam",
+        store = "/global/scratch/users/arphillips/data/interm/unmerged_bams/"
+    shell:
+        """
+        samtools merge {params.sort} {input.A} {input.B}
+        mkdir -p {params.tmp}"
+        gatk --java-options ""-Xmx4G"" AddOrReplaceReadGroups \
+        -I {params.sort} \
+        -O {output} \
+        -RGID 4 \
+        -RGLB lib1 \
+        -RGPL illumina \
+        -RGPU unit1 \
+        -RGSM {params.sample} \
+        --TMP_DIR {params.tmp} \
+        --CREATE_INDEX true
+        rm -rf {params.tmp}
+        mkdir -p {params.store}
+        mv {input.A} {params.store}
+        mv {input.B} {params.store}
         """
