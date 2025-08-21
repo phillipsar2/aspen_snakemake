@@ -1,13 +1,13 @@
 # () Merge vcf files
 rule merge_filt:
     input:
-        vcfs = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.vcf", region = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
+        vcfs = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.vcf.gz", region = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
     output:
         "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.nocall.{min_dp}dp{max_dp}.vcf.gz"
     params:
         list = "/global/scratch/users/arphillips/data/processed/filtered_snps/vcflist.{min_dp}dp{max_dp}.txt",
         path = "/global/scratch/users/arphillips/data/processed/filtered_snps/",
-        suffix = ".nocall.{min_dp}dp{max_dp}.vcf" 
+        suffix = "wgs_aspen.Chr*.nocall.{min_dp}dp{max_dp}.vcf.gz" 
     shell:
         """
         ls {params.path}*{params.suffix} > {params.list} 

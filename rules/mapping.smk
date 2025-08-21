@@ -208,18 +208,20 @@ rule addeam:
 # (9) Merge BAMs from the same sample
 rule merge_bams:
     input:
-        A = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/data/interm/mark_dups/{merge_A}.dedup.bam",
-        B = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/data/interm/mark_dups/{merge_B}.dedup.bam"
+        A = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{merge_A}.dedup.bam",
+        B = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{merge_B}.dedup.bam"
     output:
-        "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/data/interm/mark_dups/{merge_A}.{merge_B}.merged.dedup.bam"
+        "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{merge_A}_{merge_B}.merged.dedup.bam"
     params:
         tmp = "/global/scratch/users/arphillips/tmp/merge_bams/{merge_A}_{merge_B}",
-        sort = "/globial/scratch/users/arphillips/tmp/merge_bams/{merge_A}_{merge_B}/{merge_A}.{merge_B}.merged.sorted.bam",
-        store = "/global/scratch/users/arphillips/data/interm/unmerged_bams/"
+        sort = "/global/scratch/users/arphillips/tmp/merge_bams/{merge_A}_{merge_B}/{merge_A}_{merge_B}.merged.sorted.bam",
+        store = "/global/scratch/users/arphillips/data/interm/unmerged_bams/",
+        sample = "{merge_A}_{merge_B}",
+        rg = randint(1,1000)
     shell:
         """
-        samtools merge {params.sort} {input.A} {input.B}
-        mkdir -p {params.tmp}"
+        mkdir -p {params.tmp}
+        samtools merge -f {params.sort} {input.A} {input.B}
         gatk --java-options ""-Xmx4G"" AddOrReplaceReadGroups \
         -I {params.sort} \
         -O {output} \

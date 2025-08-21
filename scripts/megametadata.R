@@ -5,6 +5,8 @@ library(stringr)
 library(forcats)
 library(dplyr)
 
+# (1) Load and prep metadata files ----
+
 # Bamlist of existing bams
 dir = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/"
 bamlist <- list.files(path = dir, pattern = "\\.dedup.bam$", )
@@ -28,11 +30,11 @@ jgi_sub_ordered <- jgi_sub %>%
 dim(jgi_sub_ordered)[1] == length(seq_names)    # correctly subset?
 sum(jgi_sub_ordered$RQC.Seq.Unit.Name == seq_names) # correctly ordered?
 
-# Fix bad names
+# (2) Fix bad names ----
 bad <- jgi_sub_ordered$Sample.Name[!jgi_sub_ordered$Sample.Name %in% ben_meta$ID] 
 length(bad)
 
-issues <- c(
+issues <- c(            # issues in JGI file
   "POTR-DIXIE-1-178",
   "POTR-DIXIE-7B-231A",
   "POTR-DIXIE-8B-250",
@@ -53,10 +55,20 @@ issues <- c(
   "POTR-WR-1-203A",
   "POTR-WR-11-237B",
   "POTR-WR-8-210B",
-  "POTR-FOCO-1-170A"
+  "POTR-FOCO-1-170A",
+  "AB1",
+  "AB10",
+  "AB3-2",
+  "AB6",
+  "ESSI-002-1",
+  "ESSI-004-1",
+  "ESSI-004-3",
+  "FORE-004-1",
+  "QB7",
+  "SP-45"
 )
 
-solutions <- c(
+solutions <- c(       # correct names from Ben's file
   "KK-DIXIE-1-178",
   "KK-DIXIE-7B-231A",
   "KK-DIXIE-8B-250",
@@ -77,7 +89,17 @@ solutions <- c(
   "KK-WR-1-203A",
   "KK-WR-11-237B",
   "KK-WR-8-210A",
-  "KK-FOCO-1-170A"
+  "KK-FOCO-1-170A",
+  "AB-1", 
+  "AB-10", 
+  "AB-3", 
+  "AB-6", 
+  "ESSI-002",
+  "ESSI-004",
+  "ESSI-004",
+  "FORE-004",
+  "QB-7",
+  "FP2.5-8"
 )
 
 fixes <- cbind(issues, solutions) %>% 
@@ -88,26 +110,10 @@ fixes_sort <- fixes[match(bad, fixes$issues), ]
 jgi_sub_ordered$Sample.Name[!jgi_sub_ordered$Sample.Name %in% ben_meta$ID] <- fixes_sort$solutions 
 
 # Zero if fixed
-length(jgi_sub_ordered$Sample.Name[!jgi_sub_ordered$Sample.Name %in% ben_meta$ID])
+length( jgi_sub_ordered$Sample.Name[!jgi_sub_ordered$Sample.Name %in% ben_meta$ID])
 
 # Check for NAs in Sample.Name
 sum(is.na(jgi_sub_ordered$Sample.Name)) 
-jgi_sub_ordered$Final.Deliverable.Project.Name[is.na(jgi_sub_ordered$Sample.Name)]
-truenames <- c(
-  "AB1",
-  "AB6",
-  "AB10",
-  "AB3-2",
-  "ESSI-004-1",
-  "ESSI-004-3",
-  "FORE-004-1",
-  "QB7",
-  "ESSI-002-1",
-  "SP-45"
-)
-
-jgi_sub_ordered$Sample.Name[is.na(jgi_sub_ordered$Sample.Name)] <- truenames
-sum(is.na(jgi_sub_ordered$Sample.Name)) # should be zero
 
 # Meta sub (duplicates will be represented by one line)
 ben_sub <- ben_meta[ben_meta$ID %in% jgi_sub_ordered$Sample.Name,]
@@ -115,10 +121,9 @@ dim(ben_sub)
 
 # Merge 
 all_meta <- merge(x = jgi_sub_ordered, y = ben_sub, by.x = "Sample.Name", by.y = "ID", all.x = T)
-# all_meta_ordered <- all_meta %>%
-  # arrange(fct_relevel(RQC.Seq.Unit.Name, seq_names))
-# dim(all_meta_ordered)
 dim(all_meta)
+sum(is.na(all_meta$Latitude))
+sum(is.na(all_meta$Sample.Name))
 
 # Add on bam names
 all_meta$bams <- lapply(all_meta$RQC.Seq.Unit.Name, gsub, pattern = "fastq.gz", replacement = "dedup.bam") %>%
@@ -128,6 +133,35 @@ all_meta$bams <- lapply(all_meta$RQC.Seq.Unit.Name, gsub, pattern = "fastq.gz", 
 write.csv(all_meta,
           file = paste0("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.", Sys.Date(), ".csv"),
           row.names = F)
+
+# Check for duplicate samples (sequenced multiple time)
+sum(duplicated(all_meta$Sample.Name))
+seq_duplicates <- all_meta$Sample.Name[duplicated(all_meta$Sample.Name)]
+duplicated_samples <- all_meta[all_meta$Sample.Name %in% seq_duplicates,]
+duplicated_samples <- duplicated_samples %>% distinct(bams, .keep_all = TRUE)
+# write.table(duplicated_samples, "/global/scratch/users/arphillips/reports/filestomerge_or_resolve.08202025.txt")
+# duplicated_samples <- read.table("/global/scratch/users/arphillips/reports/filestomerge_or_resolve.08202025.txt")
+
+# dup_df <- matrix(nrow = length(unique(duplicated_samples$Sample.Name)), ncol = 4)
+# dup_df[,1] <- unique(duplicated_samples$Sample.Name)
+# for (i in unique(duplicated_samples$Sample.Name)){
+#   dup_df[dup_df[,1] == i, 2:4] <- all_meta$RQC.Seq.Unit.Name[all_meta$Sample.Name == i]
+# }
+
+dup_list <- lapply(unique(duplicated_samples$Sample.Name), function(x){all_meta$RQC.Seq.Unit.Name[all_meta$Sample.Name == x]})
+names(dup_list) <- unique(duplicated_samples$Sample.Name)
+dup_list
+
+# colnamdup_listcolnames(dup_df) <- c("Genotype", "Merge_A", "Merge_B")
+# dup_df[,2:3] <- gsub(x = dup_df[,2:3], pattern = ".fastq.gz", replacement = "")
+# dim(dup_df)
+
+write.table(dup_df, "/global/scratch/users/arphillips/reports/filestomerge.08122025.txt", 
+            row.names = F)
+
+View(all_meta_stats[all_meta_stats$Sample.Name %in% seq_duplicates,] )
+
+
 
 ##################################################  
 ### Add quality metrics
@@ -164,25 +198,6 @@ dim(all_meta_stats)
 duplicates <- all_meta_stats$RQC.Seq.Unit.Name[duplicated(all_meta_stats$RQC.Seq.Unit.Name)]
 all_meta_stats <- all_meta_stats[!duplicated(all_meta_stats$RQC.Seq.Unit.Name),]
 dim(all_meta_stats)
-
-# Check for duplicate samples (sequenced multiple time)
-sum(duplicated(all_meta_stats$Sample.Name))
-seq_duplicates <- all_meta_stats$Sample.Name[duplicated(all_meta_stats$Sample.Name)]
-duplicated_samples <- all_meta_stats[all_meta_stats$Sample.Name %in% seq_duplicates,] 
-# write.table(duplicated_samples, "/global/scratch/users/arphillips/reports/filestomerge_or_resolve.08112025.txt")
-
-dup_df <- matrix(nrow = length(unique(duplicated_samples$Sample.Name)), ncol = 3)
-dup_df[,1] <- unique(duplicated_samples$Sample.Name)
-for (i in unique(duplicated_samples$Sample.Name)){
-  dup_df[dup_df[,1] == i, 2:3] <- all_meta_stats$RQC.Seq.Unit.Name[all_meta_stats$Sample.Name == i]
-}
-
-colnames(dup_df) <- c("Genotype", "Merge_A", "Merge_B")
-
-write.table(dup_df, "/global/scratch/users/arphillips/reports/filestomerge.08122025.txt", 
-            row.names = F)
-
-View(all_meta_stats[all_meta_stats$Sample.Name %in% seq_duplicates,] )
 
 # Write megametadata_quality file
 
