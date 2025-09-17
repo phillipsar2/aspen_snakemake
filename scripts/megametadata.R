@@ -7,16 +7,22 @@ library(dplyr)
 
 # (1) Load and prep metadata files ----
 
-# Bamlist of existing bams
+# Load bamlist of existing bams
 dir = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/"
 bamlist <- list.files(path = dir, pattern = "\\.dedup.bam$", )
 bamlist
+length(bamlist)
 
 seq_names <- lapply(bamlist, gsub, pattern = "dedup.bam", replacement="fastq.gz") %>%
   unlist() # turn bams into fastq names
 length(seq_names)
 
-# Meta data
+## Deal with merged bams
+merged_files <- seq_names[grep(pattern = "merge", x = seq_names)] 
+fixed_seqnames <- paste0(str_split(merged_files, pattern = "_", simplify = T)[,1], ".fastq.gz")
+seq_names[grep(pattern = "merge", x = seq_names)] <- fixed_seqnames # replace uncropped names
+
+#  Load meta data files
 jgi_meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/completed_sequencing_samplereport.d05132025.csv") # JGI metadata file
 # jgi_meta$RQC.Seq.Unit.Name
 
@@ -112,7 +118,7 @@ jgi_sub_ordered$Sample.Name[!jgi_sub_ordered$Sample.Name %in% ben_meta$ID] <- fi
 # Zero if fixed
 length( jgi_sub_ordered$Sample.Name[!jgi_sub_ordered$Sample.Name %in% ben_meta$ID])
 
-# Check for NAs in Sample.Name
+# Check for NAs in Sample.Name - zero if OK
 sum(is.na(jgi_sub_ordered$Sample.Name)) 
 
 # Meta sub (duplicates will be represented by one line)
@@ -126,8 +132,10 @@ sum(is.na(all_meta$Latitude))
 sum(is.na(all_meta$Sample.Name))
 
 # Add on bam names
-all_meta$bams <- lapply(all_meta$RQC.Seq.Unit.Name, gsub, pattern = "fastq.gz", replacement = "dedup.bam") %>%
-  unlist()
+in_names <- cbind(bamlist, seq_names)
+all_meta <- merge(all_meta, in_names, by.x = "RQC.Seq.Unit.Name", by.y = "seq_names")
+# all_meta$bams <- lapply(all_meta$RQC.Seq.Unit.Name, gsub, pattern = "fastq.gz", replacement = "dedup.bam") %>%
+  # unlist()
 
 # Write meta data
 write.csv(all_meta,
@@ -138,7 +146,7 @@ write.csv(all_meta,
 sum(duplicated(all_meta$Sample.Name))
 seq_duplicates <- all_meta$Sample.Name[duplicated(all_meta$Sample.Name)]
 duplicated_samples <- all_meta[all_meta$Sample.Name %in% seq_duplicates,]
-duplicated_samples <- duplicated_samples %>% distinct(bams, .keep_all = TRUE)
+duplicated_samples <- duplicated_samples %>% distinct(bamlist, .keep_all = TRUE)
 # write.table(duplicated_samples, "/global/scratch/users/arphillips/reports/filestomerge_or_resolve.08202025.txt")
 # duplicated_samples <- read.table("/global/scratch/users/arphillips/reports/filestomerge_or_resolve.08202025.txt")
 
@@ -160,8 +168,6 @@ write.table(dup_df, "/global/scratch/users/arphillips/reports/filestomerge.08122
             row.names = F)
 
 View(all_meta_stats[all_meta_stats$Sample.Name %in% seq_duplicates,] )
-
-
 
 ##################################################  
 ### Add quality metrics

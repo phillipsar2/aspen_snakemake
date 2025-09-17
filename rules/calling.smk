@@ -81,7 +81,6 @@ rule diagnostics:
         ref = config["data"]["reference"]["genome"]
     output:
         "/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{region}.table"
-#    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
         gatk VariantsToTable \
@@ -174,4 +173,12 @@ rule depth_nocall:
     shell:
         "gatk SelectVariants -V {input} --exclude-filtered true --max-nocall-fraction 0.1 -O {output}"
 
-
+# (16) Exclude genotypes that don't meet quality thresholds
+rule geno_filt:
+    input:
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.vcf.gz",
+        exc = "metadata/samples_to_drop_from_vcf.txt"
+    output:
+        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.goodg.{min_dp}dp{max_dp}.vcf.gz"
+    shell:
+        "bcftools view -Oz -S ^{input.exc} {input.vcf} > {output}"

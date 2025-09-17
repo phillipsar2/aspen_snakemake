@@ -52,7 +52,7 @@ The directory roughly follows a CookieCutter directory structure.
 * Sort, add read groups, and deduplicate BAM files with samtools and GATK.
 * Assess mapping quality with qualimap's bamqc
 * Assess the DNA damage AdDeam
-* Likely need to merge bam files from multiple sequencing runs of the same genotype
+* As some genotypes were sequenced mutliple times, BAM files from multiple high-quality runs were merged with `samtools merge` and processed as described above
 
 3. Extracting plastid genome reads
 * Reads were independently mapped to a P. tremuloides chloroplast genome (MW376839.1) using bwa-mem2
@@ -69,6 +69,7 @@ The directory roughly follows a CookieCutter directory structure.
 * Variants are then filtered for: 
         10 < DP < 75 & less than 10% missing data: 465,991 (n = 174)
         10 < DP < 90 & less than 10% missing data: 547,124 (n = 1,206) 
+* After filtering, 87 samples (`metadata/samples_to_drop_from_vcf.txt`) were excluded on the critera of: genotype was duplicately sequenced (kept the better of the two), mean coverage < 10, percent of missing SNPs > 20%, ploidy could not be determined (see below), percent of reads mapped < 85% 
 * Multiple LD filters were assessed:
 	+ one SNP per 500 bp
 	+ LD thinning with PLINK with r^2 threshold of 0.1
@@ -76,9 +77,8 @@ The directory roughly follows a CookieCutter directory structure.
 
 5. Ploidy determination
 * Ploidy was determined using `gbs2ploidy`
-* Heterozygous sites from the filtered vcf were used (without LD filter applied)
+* Heterozygous sites from the filtered vcf were used (without LD filter applied, before dropping genotypes)
 * The allele ratio with the highest posterior probability was used to assign ploidy (`data/gbs2ploidy/flow_cyt_predictions.csv`)
-* Quality of the ploidy calls were assessed by TO-DO
 
 6. Genotyping
 * `updog` was used for genotyping with dosage specified by the called ploidy 

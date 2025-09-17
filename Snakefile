@@ -12,8 +12,8 @@ OTHER_POP = glob_wildcards("/global/scratch/users/arphillips/raw/other_poplars/{
 #print(OTHER_POP)
 
 # BAMs to process
-#BAM = glob_wildcards("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.dedup.bam").bam 
-BAM = glob_wildcards("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.merged.dedup.bam").bam
+BAM = glob_wildcards("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.dedup.bam").bam 
+#BAM = glob_wildcards("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{bam}.merged.dedup.bam").bam
 #print(BAM)
 
 # Chromosomes
@@ -40,7 +40,7 @@ file = pd.read_csv("/global/scratch/users/arphillips/reports/filestomerge.081220
 MERGE_A = list(file.Merge_A)
 MERGE_B = list(file.Merge_B)
 GENO = list(file.Genotype)
-print(GENO)
+#print(GENO)
 
 # =================================================================================================
 #     Target Rules
@@ -52,7 +52,7 @@ rule all:
 #        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam", sample = SAMPLE),
 #        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt", sample = SAMPLE)
 #        addeam = "/global/scratch/users/arphillips/reports/addeam/plots/damage_report_k3.pdf"
-        merge_bams = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{merge_A}_{merge_B}.merged.dedup.bam", zip,  merge_A = MERGE_A, merge_B = MERGE_B)
+#        merge_bams = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{merge_A}_{merge_B}.merged.dedup.bam", zip,  merge_A = MERGE_A, merge_B = MERGE_B)
       ## Mapping other poplar
 #        mapped = expand("/global/scratch/users/arphillips/data/interm/mapped_bam/{other_pop}.mapped.bam", other_pop = OTHER_POP),
 #        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{other_pop}.dedup.bam", other_pop = OTHER_POP),
@@ -64,7 +64,9 @@ rule all:
 #        merge_raw = expand("/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.raw.merged.vcf.gz", region = REGION),
 #        diag = expand("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{region}.table", region = REGION),
 #        snp = expand("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{chr}.table", chr = REGION),
-#        dp_table = expand("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{chr}.filtered.nocall.table", chr = REGION),#        filt_vcf = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.vcf.gz", region = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
+#        dp_table = expand("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{chr}.filtered.nocall.table", chr = REGION),
+#        filt_vcf = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.vcf.gz", region = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
+        geno_filt = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.goodg.{min_dp}dp{max_dp}.vcf.gz", region = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
       ## Genotyping
 #        merge_filt = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.nocall.{min_dp}dp{max_dp}.vcf.gz", min_dp = MIN_DP, max_dp = MAX_DP),
 #        gbs2ploidy = expand("/global/scratch/users/arphillips/data/gbs2ploidy/{bam}.propOut.csv", bam = BAM)
@@ -77,9 +79,9 @@ rule all:
 # =================================================================================================
 #     Rule Modules
 # =================================================================================================
-include: "rules/mapping.smk"
+#include: "rules/mapping.smk"
 #include: "rules/mapping_otherpoplar.smk"
-#include: "rules/calling.smk"
+include: "rules/calling.smk"
 #include: "rules/ploidy_sex.smk"
 #include: "rules/plastid.smk"
 #include: "rules/updog_genotyping.smk"

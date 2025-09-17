@@ -38,22 +38,16 @@ rule gbs2ploidy:
 # --ploidy is diploid or triploid
 rule updog:
     input:
-#        vcf = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.nocall.{min_dp}dp{max_dp}.vcf.gz", min_dp = MIN_DP, max_dp = MAX_DP)
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.nocall.10dp90.vcf.gz",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.goodg.vcf.gz",
         meta = "/global/scratch/users/arphillips/data/gbs2ploidy/flow_cyt_predictions.csv"
     output:
-        "/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{chr}.1206.txt"
+        "/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{chr}.txt"
     params:
-        tmp_dir = "/global/scratch/users/arphillips/tmp/updog/{ploidy}",
-        tmp = "/global/scratch/users/arphillips/tmp/updog/{ploidy}/wgs_aspen.{chr}.nocall.10dp90.vcf.gz",
-        outdir = "/global/scratch/users/arphillips/data/updog",
         ploidy = "{ploidy}",
-        chr = "{chr}"
+        prefix = "/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{chr}"
+    conda: "stuff_in_r"
     shell:
         """
-        mkdir -p {params.tmp_dir}
-        bcftools view -r {params.chr} {input.vcf} -Oz -o {params.tmp}
         Rscript scripts/updog.R {params.tmp} \
-        --ploidy {params.ploidy} --cores 10 --outdir {params.outdir} --chr {params.chr} --meta {input.meta}
-        rm -f {params.tmp}
+        --ploidy {params.ploidy} --cores 10 --prefix {params.prefix} --meta {input.meta}
         """
