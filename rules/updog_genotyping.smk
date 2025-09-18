@@ -38,16 +38,20 @@ rule gbs2ploidy:
 # --ploidy is diploid or triploid
 rule updog:
     input:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.goodg.vcf.gz",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.goodg.10dp90.vcf.gz",
         meta = "/global/scratch/users/arphillips/data/gbs2ploidy/flow_cyt_predictions.csv"
     output:
-        "/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{chr}.txt"
+        "/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{region}.txt"
     params:
         ploidy = "{ploidy}",
-        prefix = "/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{chr}"
+        prefix = "/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{region}"
     conda: "stuff_in_r"
     shell:
         """
-        Rscript scripts/updog.R {params.tmp} \
-        --ploidy {params.ploidy} --cores 10 --prefix {params.prefix} --meta {input.meta}
+        n=$(zcat {input.vcf} | grep -vc "#")
+        if [ "$n" -eq 0 ]; then
+            touch {output}
+        else
+            Rscript scripts/updog.R {input.vcf} --ploidy {params.ploidy} --cores 4 --prefix {params.prefix} --meta {input.meta}
+        fi
         """

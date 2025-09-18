@@ -31,17 +31,18 @@ ap <- add_argument(ap, "--prefix", help = "Prefix for output files")
 argv <- parse_args(ap)
 
 ploidy_level <- as.character(argv$ploidy)
-chr <- as.character(argv$chr)
+#chr <- as.character(argv$chr)
 cores <- as.numeric(argv$cores)
-outdir <- as.character(argv$outdir)
+#outdir <- as.character(argv$outdir)
+prefix <- as.character(argv$prefix)
 
 ## test arguments
 # ploidy_level <- as.character("diploid")
-# chr <- as.character("Chr02")
-# cores <- as.numeric(4)
-# outdir <- as.character("/global/scratch/users/arphillips/data/updog")
+# # chr <- as.character("Chr02")
+# cores <- as.numeric(1)
+# # outdir <- as.character("/global/scratch/users/arphillips/data/updog")
 # prefix <- as.character("/global/scratch/users/arphillips/data/updog/test")
-# vcf <- read.vcfR("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.nocall.10dp90.vcf.gz",
+# vcf <- read.vcfR("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.Chr09:3000000-4000000.goodg.10dp90.vcf.gz",
 #         verbose = FALSE, nrows = 1000 )
 # meta <- read.csv("/global/scratch/users/arphillips/data/gbs2ploidy/flow_cyt_predictions.csv")
 
