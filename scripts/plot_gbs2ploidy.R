@@ -58,7 +58,7 @@ filter(propOut_df, sample %in% duplicates) %>%
 winner_num <- winner_num[winner_num$Count >= 4,]
 
 # Write class to file
-# write.csv(winner_num[,c(1,4)], paste0(dir, "flow_cyt_predictions.csv"))
+write.csv(winner_num[,c(1,4)], paste0(dir, "flow_cyt_predictions.", Sys.Date(),".csv"))
 
 # winner_num <- read.csv(paste0(dir, "flow_cyt_predictions.csv"))
 

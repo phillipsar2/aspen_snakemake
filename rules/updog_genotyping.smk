@@ -41,7 +41,7 @@ rule updog:
         vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.goodg.10dp90.vcf.gz",
         meta = "/global/scratch/users/arphillips/data/gbs2ploidy/flow_cyt_predictions.csv"
     output:
-        "/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{region}.txt"
+       "/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{region}.txt"
     params:
         ploidy = "{ploidy}",
         prefix = "/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{region}"
@@ -49,9 +49,34 @@ rule updog:
     shell:
         """
         n=$(zcat {input.vcf} | grep -vc "#")
-        if [ "$n" -eq 0 ]; then
+        echo $n
+        if [ $n -eq 0 ]; then
             touch {output}
         else
             Rscript scripts/updog.R {input.vcf} --ploidy {params.ploidy} --cores 4 --prefix {params.prefix} --meta {input.meta}
         fi
         """
+
+# Merge output vcfs from updog
+rule merge_updog:
+    input:
+        dip = "/global/scratch/users/arphillips/data/updog/updog.genomat.diploid.Ch{r}.vcf.gz",
+        trip = "/global/scratch/users/arphillips/data/updog/updog.genomat.triploid.Ch{r}.vcf.gz"
+    output:
+        temp("/global/scratch/users/arphillips/data/updog/updog.genomat.Ch{r}.vcf.gz")
+    shell:
+       # bgzip *vcf
+       # for f in *.vcf.gz; do bcftools index -f $f; done
+       """
+       bcftools merge {input.dip} {input.trip} -Oz -o {output}
+       bcftools index -f {output}
+       """
+
+rule concat_updog:
+    input:
+        expand("/global/scratch/users/arphillips/data/updog/updog.genomat.Ch{r}.vcf.gz", r = R)
+    output:
+        "/global/scratch/users/arphillips/data/updog/updog.genomat.vcf.gz"
+    shell:
+        "bcftools concat -n {input} > {output}"
+    

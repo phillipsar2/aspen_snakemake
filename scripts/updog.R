@@ -12,6 +12,7 @@ library("argparser")
 library(ldsep) # v2.1.5
 library(corrplot)
 library(BIGr)
+library(tidyr)
 
 # Argument name
 ap <- arg_parser("Updog genotyping")
@@ -38,12 +39,10 @@ prefix <- as.character(argv$prefix)
 
 ## test arguments
 # ploidy_level <- as.character("diploid")
-# # chr <- as.character("Chr02")
-# cores <- as.numeric(1)
-# # outdir <- as.character("/global/scratch/users/arphillips/data/updog")
-# prefix <- as.character("/global/scratch/users/arphillips/data/updog/test")
-# vcf <- read.vcfR("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.Chr09:3000000-4000000.goodg.10dp90.vcf.gz",
-#         verbose = FALSE, nrows = 1000 )
+# cores <- as.numeric(4)
+# prefix <- as.character("/global/scratch/users/arphillips/data/updog/updog.genomat.diploid.Chr17:17000000-18000000")
+# vcf <- read.vcfR("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.Chr17:17000000-18000000.goodg.10dp90.vcf.gz",
+#         verbose = FALSE)
 # meta <- read.csv("/global/scratch/users/arphillips/data/gbs2ploidy/flow_cyt_predictions.csv")
 
 # (1) Load and process VCF ----
@@ -95,13 +94,11 @@ if (ploidy_level == 'diploid'){
   # write.table(genomat, file=paste0(outdir, "/updog.genomat.diploid.", Sys.Date(),".txt"), quote = F)
 
 } else if (ploidy_level == 'triploid'){
-
   mout <- multidog(refmat = refmat, 
                    sizemat = sizemat, 
                    ploidy = 3, 
                    model = "norm",
                    nc = cores)
-  
 } else {
   print("ERROR: --ploidy can only be diploid or triploid")
 }
@@ -110,34 +107,14 @@ if (ploidy_level == 'diploid'){
 saveRDS(mout, paste0(prefix,".raw.rds"))
 
 # (6) Filter SNPs based on updog recommendations ----
-mout_cleaned <- filter_snp(mout, prop_mis < 0.05 & bias > 0.5 & bias < 2)
+# I think we want to actually look at postmat - A matrix of posterior probabilities of each genotype 
+# for each individual. We could drop those with a lower probabilite for each indv & site individually, 
+# rather than throwing out bulk data.
+mout_cleaned <- filter_snp(mout, 
+                           # prop_mis < 0.05 & # over 5% of genotypes at that site are mis-genotyped 
+                             bias > 0.5 & bias < 2)
 
-# Extract genotype matrix
-genomat <- format_multidog(mout_cleaned, varname = "geno")
-
-# Save filtered genotype matrix
-# write.table(genomat, 
-#             file = paste0(outdir, "/updog.genomat.", ploidy_level, ".", chr, ".",Sys.Date(),".txt"), 
-#             quote = F)
-write.table(genomat, 
-            file = paste0(prefix,".txt"), # what the snakemake rule asks for
-            quote = F)
-
-# Examine genotype and SNP Quality
-# pdf(paste0(outdir,"/genotype_depth_distributions.",ploidy_level,".", chr, ".",Sys.Date(),".pdf"))
-pdf(paste0(prefix,".genotype_depth_distributions",".pdf"))
-## The (posterior) proportion of individuals mis-genotyped at each site
-hist(mout$snpdf$prop_mis, main = "Proportion of ind mis-genotyped at each SNP")
-
-## Overdispersion of each snp - simulations suggest dropping > 0.05
-hist(mout$snpdf$od, main = "Overdispersion of each SNP")
-
-## Bias - simulations suggest filtering 0.5 < x > 2
-hist(mout$snpdf$bias, main = "Bias at each SNP")
-
-dev.off()
-
-# (6b) Export as VCF ----
+# (7) Extract genotype matrix and export ----
 updog2vcf <- function (multidog.object, output.file, updog_version = NULL, 
                        compress = TRUE) {
   mout <- multidog.object
@@ -258,32 +235,55 @@ updog2vcf <- function (multidog.object, output.file, updog_version = NULL,
                                                               ".gz"), overwrite = FALSE))
   }
 }
-updog2vcf(mout_cleaned, 
-          paste0(prefix, ".vcf"),
-          updog_version = '2.1.5', compress = F)
 
-# (7) Look at linkage between sites ----
-varnames <- names(mout_cleaned$inddf)[grepl(x = names(mout_cleaned$inddf), pattern = "Pr_")]
+if (is.null(dim(mout_cleaned)) ){
+  file.create(paste0(prefix,".txt"))
+} else {
+  genomat <- format_multidog(mout_cleaned, varname = "geno")
+  write.table(genomat, 
+              file = paste0(prefix,".txt"), # what the snakemake rule asks for
+              quote = F)
+  
+  # Examine genotype and SNP Quality
+  # pdf(paste0(outdir,"/genotype_depth_distributions.",ploidy_level,".", chr, ".",Sys.Date(),".pdf"))
+  pdf(paste0(prefix,".genotype_depth_distributions",".pdf"))
+  ## The (posterior) proportion of individuals mis-genotyped at each site
+  hist(mout$snpdf$prop_mis, main = "Proportion of ind mis-genotyped at each SNP")
+  
+  ## Overdispersion of each snp - simulations suggest dropping > 0.05
+  hist(mout$snpdf$od, main = "Overdispersion of each SNP")
+  
+  ## Bias - simulations suggest filtering 0.5 < x > 2
+  hist(mout$snpdf$bias, main = "Bias at each SNP")
+  
+  dev.off()
+  
+  ## Export cleaned gmat as vcf
+  updog2vcf(mout_cleaned, 
+            paste0(prefix, ".vcf"),
+            updog_version = '2.1.5', compress = F)
+  
+  ## Look at linkage between sites
+  varnames <- names(mout_cleaned$inddf)[grepl(x = names(mout_cleaned$inddf), pattern = "Pr_")]
+  gp <- format_multidog(x = mout_cleaned, varname = varnames)
+  
+  ldout <- ldfast(gp = gp, type = "r2")
+  
+  # pdf(paste0(outdir,"/LD_corrplot.",ploidy_level,".", chr, ".",Sys.Date(),".pdf"))
+  pdf(paste0(prefix,"LD_corrplot.",".pdf"))
+  corrplot(corr = ldout$ldmat, 
+           method = "color", 
+           type = "upper",
+           diag = FALSE,
+           tl.pos = "n")
+  dev.off()
+  
+  write.table(ldout$ldmat, 
+              file = paste0(prefix, ".ldsep.r2",".txt"),
+              # file = paste0(outdir, "/ldsep.r2.", ploidy_level, ".", chr, ".",Sys.Date(),".txt"), 
+              quote = F)
+}
 
-# larray <- format_multidog(x = mout_cleaned, varname = varnames)
-gp <- format_multidog(x = mout_cleaned, varname = varnames)
 
-# like_ld <- mldest(geno = larray, 
-#                   K = ploidy_level, 
-#                   type = "comp", 
-#                   nc = cores)
-ldout <- ldfast(gp = gp, type = "r2")
 
-# pdf(paste0(outdir,"/LD_corrplot.",ploidy_level,".", chr, ".",Sys.Date(),".pdf"))
-pdf(paste0(prefix,"LD_corrplot.",".pdf"))
-corrplot(corr = ldout$ldmat, 
-         method = "color", 
-         type = "upper",
-         diag = FALSE,
-         tl.pos = "n")
-dev.off()
 
-write.table(ldout$ldmat, 
-            file = paste0(prefix, ".ldsep.r2",".txt"),
-            # file = paste0(outdir, "/ldsep.r2.", ploidy_level, ".", chr, ".",Sys.Date(),".txt"), 
-            quote = F)

@@ -144,6 +144,17 @@ set-resources:
     slurm_partition: "savio4_htc"
     slurm_account:  "co_moilab"
 
+
+  # ----------------------------------------------------------------------
+  #     haplotype_caller
+  # ----------------------------------------------------------------------
+
+  haplotype_caller:
+    cpus_per_task: 2
+    runtime: 2880
+    slurm_partition: "savio4_htc"
+    slurm_account:  "co_moilab"
+
   # ----------------------------------------------------------------------
   #     mpileup
   # ----------------------------------------------------------------------
@@ -178,7 +189,7 @@ set-resources:
   # ----------------------------------------------------------------------
 
   updog:
-    cpus_per_task: 10
+    cpus_per_task: 4
     mem_mb: 91400
     runtime: 4320
     slurm_partition: "savio4_htc"

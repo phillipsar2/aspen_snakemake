@@ -23,6 +23,7 @@ CHR = list(fai[0])
 # 1 Mb regions
 region_list = pd.read_csv("/global/scratch/projects/fc_moilab/projects/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/chr_regions.txt", header = None, sep = "\t")
 REGION = list(region_list[0])
+R = glob_wildcards("/global/scratch/users/arphillips/data/updog/updog.genomat.diploid.Ch{r}.vcf.gz").r
 
 # Date
 DATE = datetime.datetime.utcnow().strftime("%Y-%m-%d")
@@ -31,9 +32,9 @@ DATE = datetime.datetime.utcnow().strftime("%Y-%m-%d")
 MAX_DP = ["90"]
 MIN_DP = ["10"]
 
-# Ploidy range
-GENOTYPE_PLOIDY = ["2", "3"]
-PLOIDY = ["diploid", "triploid"]
+# Ploidy range - updog
+#GENOTYPE_PLOIDY = ["2", "3"]
+#PLOIDY = ["diploid", "triploid"]
 
 # MERGE contains a list of the bams that belong to each genotype (GENO) so they can be merged
 file = pd.read_csv("/global/scratch/users/arphillips/reports/filestomerge.08122025.txt", sep = " ", header = 0)
@@ -41,6 +42,11 @@ MERGE_A = list(file.Merge_A)
 MERGE_B = list(file.Merge_B)
 GENO = list(file.Genotype)
 #print(GENO)
+
+# Ploidy genotype pairing
+pgfile = pd.read_csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/ploidy.geno.1127.2025-09-30.csv", sep = ",", header = 0)
+GENOTYPE =  list(pgfile["sample"])
+GENOTYPE_PLOIDY = list(pgfile.ploidy)
 
 # =================================================================================================
 #     Target Rules
@@ -59,6 +65,10 @@ rule all:
 #        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{other_pop}_stats/genome_results.txt", other_pop = OTHER_POP)
       ## Sex
 #        depth = expand("/global/scratch/users/arphillips/data/toz19/{bam}.chr13.cov.txt", bam = BAM),
+      ## Calling with GATK
+        call = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.vcf.gz", geno = GENOTYPE),
+        genotype = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.ploidy{geno_ploidy}.vcf.gz", zip, geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY),
+        join =  "/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.vcf.gz"
       ## Calling and filtering
 #        raw_vcf = expand("/global/scratch/users/arphillips/data/vcf/wgs_aspen.{bam}.raw.vcf.gz", bam = BAM),
 #        merge_raw = expand("/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.raw.merged.vcf.gz", region = REGION),
@@ -66,7 +76,7 @@ rule all:
 #        snp = expand("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{chr}.table", chr = REGION),
 #        dp_table = expand("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{chr}.filtered.nocall.table", chr = REGION),
 #        filt_vcf = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.vcf.gz", region = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
-        geno_filt = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.goodg.{min_dp}dp{max_dp}.vcf.gz", region = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
+#        geno_filt = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.goodg.{min_dp}dp{max_dp}.vcf.gz", region = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
       ## Genotyping
 #        merge_filt = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.nocall.{min_dp}dp{max_dp}.vcf.gz", min_dp = MIN_DP, max_dp = MAX_DP),
 #        gbs2ploidy = expand("/global/scratch/users/arphillips/data/gbs2ploidy/{bam}.propOut.csv", bam = BAM)
@@ -74,14 +84,19 @@ rule all:
 #        map_plas = expand("/global/scratch/users/arphillips/data/interm/mapped_chl/{sample}.mapped_chl.bam", sample = SAMPLE)
 #        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
       ## Genotyping
-#        updog = expand("/global/scratch/users/arphillips/data/updog/updog.genomat.{ploidy}.{chr}.1206.txt", ploidy = ["diploid", "triploid"], chr = CHR)
+#        dsubsample = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/{geno}.10dp90.vcf.gz", geno = GENOTYPE),
+#         gatk = expand("/global/scratch/users/arphillips/data/processed/genotyped/{geno}.10dp90.ploidy{geno_ploidy}.vcf.gz", zip, geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY),
+#         merge_vcfs = "/global/scratch/users/arphillips/data/processed/genotyped/wgs_aspen.all.10dp90.genos.vcf.gz"
+        freebayes = expand("/global/scratch/users/arphillips/data/vcf/freebayes/called/{geno}.{ploidy}.vcf.gz",zip, geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
 
 # =================================================================================================
 #     Rule Modules
 # =================================================================================================
 #include: "rules/mapping.smk"
 #include: "rules/mapping_otherpoplar.smk"
-include: "rules/calling.smk"
+#include: "rules/calling.smk"
 #include: "rules/ploidy_sex.smk"
 #include: "rules/plastid.smk"
 #include: "rules/updog_genotyping.smk"
+#include: "rules/gatk_genotyping.smk"
+include: "rules/freebayes_genotyping.smk"

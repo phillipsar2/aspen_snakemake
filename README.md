@@ -61,14 +61,11 @@ The directory roughly follows a CookieCutter directory structure.
 
 4. Variant calling and filtering
 * Variants are initially called with bcftools mpileup. Quality of SNPs is assed between each filtering step.
-	Raw variants: 62,636,412 (n = 174)
-                      108,998,228 (n = 1,206) 
+	Raw SNPs: 90,102,90  
 * Variants are hard filtered for biallelic sites, MQ > 40, and QUAL > 40.
-	SNPs after hard filtering: 44,460,731 (n = 174)
-                   		   61,392,826 (n = 1,206)
+	SNPs after hard filtering: 61,364,088
 * Variants are then filtered for: 
-        10 < DP < 75 & less than 10% missing data: 465,991 (n = 174)
-        10 < DP < 90 & less than 10% missing data: 547,124 (n = 1,206) 
+        10 < DP < 90 & less than 10% missing data: 544,839 
 * After filtering, 87 samples (`metadata/samples_to_drop_from_vcf.txt`) were excluded on the critera of: genotype was duplicately sequenced (kept the better of the two), mean coverage < 10, percent of missing SNPs > 20%, ploidy could not be determined (see below), percent of reads mapped < 85% 
 * Multiple LD filters were assessed:
 	+ one SNP per 500 bp
