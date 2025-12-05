@@ -39,47 +39,59 @@ rule haplotype_caller:
         ref = config["data"]["reference"]["genome"], 
         bam = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{geno}.dedup.bam" 
     output:
-        temp("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.vcf.gz")
+        temp("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.{region}.g.vcf.gz")
+    params:
+        region = "{region}"
     shell:
         """
         gatk --java-options "-Xmx4g" HaplotypeCaller \
         --input {input.bam} \
         --output {output} \
         --reference {input.ref} \
-        -G StandardAnnotation 
+        -ERC BP_RESOLUTION \
+        -G StandardAnnotation \
+        -L {params.region} 
         """
 
 # (2) Individually genotype with correct ploidy level specified
+## Merge vcfs for each genotype then do genotyping
 rule indv_geno:
     input:
-        vcf = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.vcf.gz",
+        vcf = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.{region}.g.vcf.gz",
 #        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/{geno}.10dp90.vcf.gz",
         ref = config["data"]["reference"]["genome"]
     output:
-       temp("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.ploidy{geno_ploidy}.vcf.gz")
+       temp("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.{region}.ploidy{geno_ploidy}.g.vcf.gz")
     params:
         ploidy = "{geno_ploidy}",
-        tmp =  "/global/scratch/users/arphillips/tmp/joint_geno/{geno}"
+        tmpdir =  "/global/scratch/users/arphillips/tmp/joint_geno/{geno}.{region}",
+        pre = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}",
+        list = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.list"
     shell:
         """
-        mkdir -p {params.tmp}
+        mkdir -p {params.tmpdir}
+        ls {params.pre}*.g.vcf.gz > {params.list}
+        gatk MergeVcfs \
+        -I {params.list} \
+        -O {params.pre}.g.vcf.gz
+
         gatk GenotypeGVCFs \
         -R {input.ref} \
-        -V {input.vcf} \
+        -V {input.pre}.g.vcf.gz \
         -G StandardAnnotation \
         -G AS_StandardAnnotation \
-        --tmp-dir {params.tmp} \
+        --tmp-dir {params.tmpdir} \
         --sample-ploidy {params.ploidy} \
         -O {output}
-        rm -rf {params.tmp}
+        rm -rf {params.tmpdir}
         """
 
 #(3) Merge samples into large VCF
 rule mergevcfs:
     input:
-        vcfs = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.ploidy{geno_ploidy}.vcf.gz", zip,  geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
+        vcfs = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.{region}.ploidy{geno_ploidy}.vcf.gz", zip,  geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY, region = CHR)
     output:
-        "/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.vcf.gz"
+        "/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.{region}.vcf.gz"
     params:
         dir = "/global/scratch/users/arphillips/data/vcf/gatk/called/",
         list = "/global/scratch/users/arphillips/data/vcf/gatk/called/genotyped.vcf.list" 

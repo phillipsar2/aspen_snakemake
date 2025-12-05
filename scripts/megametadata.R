@@ -226,3 +226,40 @@ seq_list <- to_download_compl %>%
 dim(seq_list)
 
 write.csv(seq_list, paste0("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/seq_to_download.",Sys.Date(),".csv"), row.names = F)
+
+
+##################################################  
+### CA aspen
+##################################################
+library(stringr)
+library(ggplot2)
+all <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata_quality.2025-08-11.csv")
+
+bamlist <- read.csv("/global/home/users/wandif/metadata/california.bamlist.txt", F)
+bamlist$bam <- str_split(bamlist$V1, pattern = "/", simplify = T)[,10]
+head(bamlist)
+
+ca <- all[all$bams %in%  bamlist$bam,]
+dim(ca)
+
+sum(ca$bams == bamlist$bam)
+head(ca$bams)
+head(bamlist$bam)
+
+
+# Assign population IDs
+ca$Sample.Name
+ca[grep(x = ca$Sample.Name, pattern = "NVO"),c('Latitude', 'Longitude')]
+
+pops <- str_split(ca$Sample.Name, pattern = "[-_]", simplify = T)[,1]
+str(pops)
+unique(pops) %>% length()
+
+ca$population_ID <- pops
+ca$population_ID[ca$population_ID %in% c('CR', 'WR')] <- "CR-WR"
+
+ggplot(ca, aes(x = Longitude, y = Latitude, color = population_ID)) +
+  geom_point()
+
+write.csv(ca, "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/california.megametadata.2025-12-03.csv" )
+

@@ -33,7 +33,7 @@ pts <- st_as_sf(elev_df, coords = c( 'Longitude', 'Latitude') ) # lat long coord
 pts <- st_set_crs(pts, 4326) 
 
 #################################
-# Extract CHELSA bioclim data ----
+# present - Extract CHELSA bioclim data ----
 #################################
 # chelsa v2 climatology 1981-2010 bioclim variables
 
@@ -77,6 +77,40 @@ write.csv(clim_df, paste0(chelsa_path, "CHELSA_climate_data.",n,".", Sys.Date(),
 # offsets <- c(-273.15, 0,0,0,-273.15,-273.15,0,-273.15,-273.15,-273.15,-273.15,0,0,0,0,0,0,0,0)
 ## offsets from https://chelsa-climate.org/wp-admin/download-page/CHELSA_tech_specification_V2.pdf
 # scale = 0.1
+
+#################################
+# future -  Extract CHELSA bioclim data ----
+#################################
+
+## Set up pts
+chelsa_path <- "/global/scratch/users/arphillips/data/climate/chelsa/chelsav2/GLOBAL/climatologies/2071-2100/IPSL-CM6A-LR/ssp370/"
+
+pts_transform <- st_transform(pts, "WGS84") # transform points to projection of raster
+
+## Sample point data from rasters
+bioclim <- paste0("bio", c(paste0("0",seq(1, 9, 1)), seq(10, 19, 1)))
+
+clim_mat <- matrix(NA, nrow = dim(pts_transform)[1], ncol = 22)
+colnames(clim_mat) <- c("Sample.Name", "lat", "lon", bioclim)
+
+# clim_mat[,1] <- sub_meta$Latitude
+# clim_mat[,2] <- sub_meta$Longitude
+clim_mat[,1] <- elev_df$Sample.Name
+clim_mat[,2] <- elev_df$Latitude
+clim_mat[,3] <- elev_df$Longitude
+clim_df <- as.data.frame(clim_mat)
+# head(clim_df)
+
+for (i in bioclim[1:19]){
+  r <- rast(paste0(chelsa_path, "CHELSA_ipsl-cm6a-lr_ssp370_", i, "_2071-2100_V.2.1.tif"))
+  clim_df[,i] <- extract(r, pts_transform)[,2]
+  print(paste0(i, " DONE"))
+}
+
+head(clim_df)
+tail(clim_df)
+
+write.csv(clim_df, paste0(chelsa_path, "CHELSA_ipsl-cm6a-lr_ssp370_climate_data.",n,".", Sys.Date(),".csv"))
 
 #########################################
 # Get elevation, aspect, and slope ----

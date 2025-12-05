@@ -63,12 +63,6 @@ rule all:
 #        mapped = expand("/global/scratch/users/arphillips/data/interm/mapped_bam/{other_pop}.mapped.bam", other_pop = OTHER_POP),
 #        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{other_pop}.dedup.bam", other_pop = OTHER_POP),
 #        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{other_pop}_stats/genome_results.txt", other_pop = OTHER_POP)
-      ## Sex
-#        depth = expand("/global/scratch/users/arphillips/data/toz19/{bam}.chr13.cov.txt", bam = BAM),
-      ## Calling with GATK
-        call = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.vcf.gz", geno = GENOTYPE),
-        genotype = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.ploidy{geno_ploidy}.vcf.gz", zip, geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY),
-        join =  "/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.vcf.gz"
       ## Calling and filtering
 #        raw_vcf = expand("/global/scratch/users/arphillips/data/vcf/wgs_aspen.{bam}.raw.vcf.gz", bam = BAM),
 #        merge_raw = expand("/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.raw.merged.vcf.gz", region = REGION),
@@ -84,10 +78,8 @@ rule all:
 #        map_plas = expand("/global/scratch/users/arphillips/data/interm/mapped_chl/{sample}.mapped_chl.bam", sample = SAMPLE)
 #        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
       ## Genotyping
-#        dsubsample = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/{geno}.10dp90.vcf.gz", geno = GENOTYPE),
-#         gatk = expand("/global/scratch/users/arphillips/data/processed/genotyped/{geno}.10dp90.ploidy{geno_ploidy}.vcf.gz", zip, geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY),
-#         merge_vcfs = "/global/scratch/users/arphillips/data/processed/genotyped/wgs_aspen.all.10dp90.genos.vcf.gz"
-        freebayes = expand("/global/scratch/users/arphillips/data/vcf/freebayes/called/{geno}.{ploidy}.vcf.gz",zip, geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
+         haplotype = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.{region}.g.vcf.gz", geno = GENOTYPE, region = CHR)
+#        genotyping = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.{region}.ploidy{geno_ploidy}.g.vcf.gz", geno = GENOTYPE, genotype_ploidy = GENOTYPE_PLOIDY)
 
 # =================================================================================================
 #     Rule Modules
@@ -98,5 +90,5 @@ rule all:
 #include: "rules/ploidy_sex.smk"
 #include: "rules/plastid.smk"
 #include: "rules/updog_genotyping.smk"
-#include: "rules/gatk_genotyping.smk"
-include: "rules/freebayes_genotyping.smk"
+include: "rules/gatk_genotyping.smk"
+#include: "rules/freebayes_genotyping.smk"

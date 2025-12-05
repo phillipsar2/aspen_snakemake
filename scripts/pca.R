@@ -227,12 +227,12 @@ library(tidyverse)
 library(ggpubr)
 library(viridis)
 
-# pca <- read_table("/global/scratch/users/arphillips/data/pca/wgs_aspen.all.10dp90.thin.eigenvec", col_names = FALSE)
-# eigenval <- scan("/global/scratch/users/arphillips/data/pca/wgs_aspen.all.10dp90.thin.eigenval")
+pca <- read_table("/global/scratch/users/arphillips/data/pca/wgs_aspen.all.10dp90.thin.eigenvec", col_names = FALSE)
+eigenval <- scan("/global/scratch/users/arphillips/data/pca/wgs_aspen.all.10dp90.thin.eigenval")
 
 ## CA PCA
-pca <- read_table("/global/scratch/users/arphillips/data/pca/wgs_aspen.CA.10dp90.thin.eigenvec", col_names = FALSE)
-eigenval <- scan("/global/scratch/users/arphillips/data/pca/wgs_aspen.CA.10dp90.thin.eigenval")
+# pca <- read_table("/global/scratch/users/arphillips/data/pca/wgs_aspen.CA.10dp90.thin.eigenvec", col_names = FALSE)
+# eigenval <- scan("/global/scratch/users/arphillips/data/pca/wgs_aspen.CA.10dp90.thin.eigenval")
 
 # sort out the pca data
 # remove nuisance column
@@ -267,17 +267,17 @@ cumsum(pve$pve)
 # pca <- as.tibble(data.frame(pca, spp, loc, spp_loc))
 
 # plot pca
-pca_p <- ggplot(pca_df, aes(PC1, PC2, col = Latitude)) + 
+pca_p <- ggplot(pca_df, aes(PC1, PC2, col = PC1)) + 
   geom_point(size = 3) +
   theme_bw() + 
   xlab(paste0("PC1 (", signif(pve$pve[1], 3), "%)")) + 
   ylab(paste0("PC2 (", signif(pve$pve[2], 3), "%)")) +
   scale_color_viridis()
-
+pca_p
 ggsave(pca_p, filename = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/figures/pca.CA.plink.pdf", 
        width = 5, height = 4, unit = "in")
 
-ggplot(pca_df, aes(PC1, PC2, col = Longitude)) + 
+ggplot(pca_df, aes(PC1, PC2, col = PC2)) + 
   geom_point(size = 3) +
   theme_bw() + 
   xlab(paste0("PC1 (", signif(pve$pve[1], 3), "%)")) + 
@@ -294,20 +294,20 @@ ggplot(pca_df, aes(PC3, PC2, col = PC3)) +
 ggsave(filename = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/figures/pca.CA.PC2_PC3.plink.pdf", 
        width = 5, height = 4, unit = "in")
 
-# ggplot(pca_df, aes(y = Latitude, x = Longitude, color = PC3)) +
-#   geom_point(alpha = 0.7) +
-#   theme_bw() +
-#   scale_color_viridis()
+ggplot(pca_df, aes(y = Latitude, x = Longitude, color = PC1)) +
+  geom_point(alpha = 0.5) +
+  theme_bw() +
+  scale_color_viridis()
 
-# ggplot(pca_df, aes(y = Latitude, x = Longitude, color = PC2)) +
-#   geom_point(alpha = 0.7) +
-#   theme_bw() +
-#   scale_color_viridis(option = "C")
-# 
-# ggplot(pca_df, aes(y = Latitude, x = Longitude, color = PC3)) +
-#   geom_point(alpha = 0.7) +
-#   theme_bw() +
-#   scale_color_viridis(option = "F")
+ggplot(pca_df, aes(y = Latitude, x = Longitude, color = PC2)) +
+  geom_point(alpha = 0.7) +
+  theme_bw() +
+  scale_color_viridis(option = "C")
+
+ggplot(pca_df, aes(y = Latitude, x = Longitude, color = PC3)) +
+  geom_point(alpha = 0.7) +
+  theme_bw() +
+  scale_color_viridis(option = "F")
 
 ## Map
 library(raster)
