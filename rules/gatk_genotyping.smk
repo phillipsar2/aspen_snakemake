@@ -39,7 +39,7 @@ rule haplotype_caller:
         ref = config["data"]["reference"]["genome"], 
         bam = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{geno}.dedup.bam" 
     output:
-        temp("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.{region}.g.vcf.gz")
+        "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.{region}.g.vcf.gz"
     params:
         region = "{region}"
     shell:
@@ -53,33 +53,47 @@ rule haplotype_caller:
         -L {params.region} 
         """
 
-# (2) Individually genotype with correct ploidy level specified
+# (2) Merge VCFs
 ## Merge vcfs for each genotype then do genotyping
-rule indv_geno:
-    input:
-        vcf = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.{region}.g.vcf.gz",
-#        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/{geno}.10dp90.vcf.gz",
-        ref = config["data"]["reference"]["genome"]
+rule merge_gvcfs:
+    input: 
+        vcf = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{{geno}}.{region}.g.vcf.gz",region = CHR),
     output:
-       temp("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.{region}.ploidy{geno_ploidy}.g.vcf.gz")
+        "/global/scratch/users/arphillips/data/vcf/gatk/merged/{geno}.g.vcf.gz"
     params:
-        ploidy = "{geno_ploidy}",
-        tmpdir =  "/global/scratch/users/arphillips/tmp/joint_geno/{geno}.{region}",
         pre = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}",
         list = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.list"
     shell:
         """
-        mkdir -p {params.tmpdir}
         ls {params.pre}*.g.vcf.gz > {params.list}
         gatk MergeVcfs \
         -I {params.list} \
-        -O {params.pre}.g.vcf.gz
+        -O {output}
+        rm {params.list}
+        """
 
+# (3) Individually genotype with correct ploidy level specified
+## Merge vcfs for each genotype then do genotyping
+### double bracket masks geno wildcard in input
+rule indv_geno:
+    input:
+        vcf = "/global/scratch/users/arphillips/data/vcf/gatk/merged/{geno}.g.vcf.gz",
+        ref = config["data"]["reference"]["genome"]
+    output:
+       "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.g.vcf.gz"
+    params:
+        ploidy = "{geno_ploidy}",
+        tmpdir =  "/global/scratch/users/arphillips/tmp/joint_geno/{geno}",
+        pre = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}",
+    shell:
+        """
+        mkdir -p {params.tmpdir}
         gatk GenotypeGVCFs \
         -R {input.ref} \
-        -V {input.pre}.g.vcf.gz \
+        -V {input.vcf} \
         -G StandardAnnotation \
         -G AS_StandardAnnotation \
+        --include-non-variant-sites \
         --tmp-dir {params.tmpdir} \
         --sample-ploidy {params.ploidy} \
         -O {output}
@@ -87,22 +101,27 @@ rule indv_geno:
         """
 
 #(3) Merge samples into large VCF
-rule mergevcfs:
+rule combvcfs:
     input:
-        vcfs = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.{region}.ploidy{geno_ploidy}.vcf.gz", zip,  geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY, region = CHR)
+        vcfs = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.g.vcf.gz", zip,  geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY),
+        ref = config["data"]["reference"]["genome"]
     output:
-        "/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.{region}.vcf.gz"
+        "/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.{region}.g.vcf.gz"
     params:
-        dir = "/global/scratch/users/arphillips/data/vcf/gatk/called/",
-        list = "/global/scratch/users/arphillips/data/vcf/gatk/called/genotyped.vcf.list" 
+        chr = "{region}",
+        vcfs = lambda wildcards, input: ' -V '.join(input.vcfs) 
     shell:
         """
-        ls {params.dir}.*dp*ploidy*.vcf.gz > {params.list}
-        gatk MergeVcfs \
-        -I {params.list} \
+        gatk CombineGVCFs \
+        -R {input.ref} \
+        -L {params.chr} \
+        -V {params.vcfs} \
         -O {output}
         """
 
+###########################
+###########################
+###########################
 
 # Genotyping quickly with GATK
 # Gentoyping assumbing all are diploid or triploid to see how results change

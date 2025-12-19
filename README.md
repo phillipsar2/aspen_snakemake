@@ -2,7 +2,7 @@
 
 Author: Alyssa Phillips
 
-Snakemake (v8.27.1) pipeline for variant calling in a large quaking aspen WGS dataset.
+Snakemake (v9.14.5) pipeline for variant calling in a large quaking aspen WGS dataset.
 The directory roughly follows a CookieCutter directory structure.
 
 ## Running the pipeline

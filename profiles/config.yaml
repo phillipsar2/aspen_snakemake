@@ -27,7 +27,7 @@ latency-wait: 120
 
 # Additional settings used for our purposes
 use-conda: True
-jobs: 300
+jobs: 200
 max-jobs-per-timespan: "60/1m"
 keep-going: True
 rerun-incomplete: True
@@ -155,6 +155,13 @@ set-resources:
     slurm_partition: "savio4_htc"
     slurm_account: "co_moilab"
 
+  indv_geno:
+    cpus_per_task: 2
+    runtime: 1440
+    slurm_partition: "savio4_htc"
+    slurm_account: "co_moilab"
+
+
   # ----------------------------------------------------------------------
   #     mpileup
   # ----------------------------------------------------------------------
@@ -179,8 +186,8 @@ set-resources:
   # ----------------------------------------------------------------------
 
   gbs2ploidy:
-    cpus_per_task: 1
-    mem_mb: 9600
+    cpus_per_task: 2
+    mem_mb: 19200
     slurm_partition: "savio4_htc"
     runtime: 720
 
