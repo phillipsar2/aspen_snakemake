@@ -43,23 +43,24 @@ rule vcflist:
     shell:
         "ls {params.path}*.raw.vcf.gz > {output}"
 
-rule bcftools_merge:
-    input:
-        list = "/global/scratch/users/arphillips/data/vcf/vcflist.raw.txt"
-    output:
-        "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.raw.merged.vcf.gz"
-    params:
-        region = "{region}"
-    shell:
-        "/global/scratch/users/arphillips/toolz/bcftools/bcftools merge -l {input} -r {params} -Oz -o {output}"
+#rule bcftools_merge:
+#    input:
+#        list = "/global/scratch/users/arphillips/data/vcf/vcflist.raw.txt"
+#    output:
+#        "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.raw.merged.vcf.gz"
+#    params:
+#        region = "{region}"
+#    shell:
+#        "/global/scratch/users/arphillips/toolz/bcftools/bcftools merge -l {input} -r {params} -Oz -o {output}"
 
 # (9) Extract SNPs from each vcf by region
 rule get_snps:
     input:
         ref = config["data"]["reference"]["genome"],
-        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.raw.merged.vcf.gz"
+        vcf = "/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.{region}.g.vcf.gz"
+#        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.raw.merged.vcf.gz"
     output:
-         "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.snps.vcf.gz"
+         "/global/scratch/users/arphillips/data/vcf/snps/wgs_aspen.all.genos.{region}.snps.vcf.gz"
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
@@ -77,16 +78,16 @@ rule get_snps:
 # Extract alternate base quality (QUAL), mapping quality (MQ), and total depth at the site (DP)
 rule diagnostics:
     input:
-        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.snps.vcf.gz",
+        vcf = "/global/scratch/users/arphillips/data/vcf/snps/wgs_aspen.all.genos.{region}.snps.vcf.gz",
         ref = config["data"]["reference"]["genome"]
     output:
-        "/global/scratch/users/arphillips/reports/filtering/wgs_aspen.{region}.table"
+        "/global/scratch/users/arphillips/reports/filtering/wgs_aspen.all.genos.{region}.table"
     shell:
         """
         gatk VariantsToTable \
         -R {input.ref} \
         -V {input.vcf} \
-        -F CHROM -F POS -F QUAL -F DP -F MQ \
+        -F QUAL -F DP -F MQ \
         -O {output}
         """
 
@@ -98,16 +99,16 @@ rule diagnostics:
 rule filter_snps:
     input:
         ref = config["data"]["reference"]["genome"],
-        vcf = "/global/scratch/users/arphillips/data/vcf/wgs_aspen.{region}.snps.vcf.gz"
+        vcf = "/global/scratch/users/arphillips/data/vcf/snps/wgs_aspen.all.genos.{region}.snps.vcf.gz"
     output:
-        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.snps.vcf.gz"
+        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.genos.{region}.filtered.snps.vcf.gz"
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
         gatk VariantFiltration \
         -V {input.vcf} \
-        -filter \"QUAL < 30.0\" --filter-name \"QUAL30\" \
-        -filter \"MQ < 30.0\" --filter-name \"MQ30\" \
+        -filter \"QUAL < 40.0\" --filter-name \"QUAL40\" \
+        -filter \"MQ < 40.0\" --filter-name \"MQ40\" \
         -O {output}
         """
 
@@ -115,9 +116,9 @@ rule filter_snps:
 rule filter_nocall:
     input:
         ref = config["data"]["reference"]["genome"],
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.snps.vcf.gz"
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.genos.{region}.filtered.snps.vcf.gz"
     output:
-        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf.gz"
+        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.genos.{region}.filtered.nocall.vcf.gz"
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
@@ -127,17 +128,16 @@ rule filter_nocall:
 # (13) Extract genotype depth across samples to determine DP cutoff
 rule depth:
     input:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf.gz",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.genos.{region}.filtered.nocall.vcf.gz",
         ref = config["data"]["reference"]["genome"]
     output:
-        "/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.{region}.filtered.nocall.table"
+        "/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.all.genos.{region}.filtered.nocall.table"
 #    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     shell:
         """
         gatk VariantsToTable \
         -R {input.ref} \
         -V {input.vcf} \
-        -F CHROM -F POS \
         -GF DP \
         -O {output}
         """
@@ -145,11 +145,10 @@ rule depth:
 # (14) Fitlter by depth of each genotype at each site
 rule filter_depth:
     input:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.filtered.nocall.vcf.gz",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.genos.{region}.filtered.nocall.vcf.gz",
         ref = config["data"]["reference"]["genome"]
-#    conda: "/global/home/users/arphillips/.conda/envs/gatk"
     output:
-        dp = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.depth.{min_dp}dp{max_dp}.vcf.gz"
+        dp = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.genos.{region}.depth.{min_dp}dp{max_dp}.vcf.gz"
     params:
         min = "{min_dp}",
         max = "{max_dp}"
@@ -166,12 +165,22 @@ rule filter_depth:
 # (15) Filter snps for genotype missingness (10%)
 rule depth_nocall:
     input:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.depth.{min_dp}dp{max_dp}.vcf.gz",
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.genos.{region}.depth.{min_dp}dp{max_dp}.vcf.gz",
     output:
-        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.{region}.nocall.{min_dp}dp{max_dp}.vcf.gz",
-#    conda: "/global/home/users/arphillips/.conda/envs/gatk"
+        vcf = "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.genos.{region}.nocall01.{min_dp}dp{max_dp}.vcf.gz",
     shell:
         "gatk SelectVariants -V {input} --exclude-filtered true --max-nocall-fraction 0.1 -O {output}"
+
+# (16) concatonate vcfs to one big filtered VCF
+rule bcftools_concat:
+    input:
+        vcfs = expand("/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.genos.{region}.nocall01.{min_dp}dp{max_dp}.vcf.gz", region = REGION, min_dp = MIN_DP, max_dp = MAX_DP)
+    output:
+        "/global/scratch/users/arphillips/data/processed/filtered_snps/wgs_aspen.all.genos.nocall01.{min_dp}dp{max_dp}.vcf.gz"
+    params:
+        vcfs = lambda wildcards, input: input.vcfs
+    shell:
+        "bcftools concat -Oz -o {output} {params.vcfs}"
 
 # (16) Exclude genotypes that don't meet quality thresholds
 rule geno_filt:

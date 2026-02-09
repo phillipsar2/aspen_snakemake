@@ -15,6 +15,7 @@ data:
     # Path to the reference genome, using the file ideally as it is provided by the GATK bundle.
     # Path needs to be absolute! No relative path (e.g., `../ref`)!
     genome: "/global/scratch/projects/fc_moilab/projects/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/Populus_tremuloides_var_CAM1604-4_HAP1.mainGenome.fasta"
+    contigs: "data/genome/intervals.list"
 
 # =================================================================================================
 #    Snakemake settings
@@ -40,7 +41,7 @@ printshellcmds: True
 default-resources:
   slurm_partition: "savio4_htc" 
   slurm_account:  "co_moilab"
-  runtime: 300
+  runtime: 720
   cores: 1
   cpus_per_task: 1
   mem_mb: 9600
@@ -151,7 +152,7 @@ set-resources:
 
   haplotype_caller:
     cpus_per_task: 2
-    runtime: 1440
+    runtime: 4320
     slurm_partition: "savio4_htc"
     slurm_account: "co_moilab"
 
@@ -161,6 +162,17 @@ set-resources:
     slurm_partition: "savio4_htc"
     slurm_account: "co_moilab"
 
+  combine_gvcfs:
+    cpus_per_task: 10
+    runtime: 1440
+    slurm_partition: "savio4_htc"
+    slurm_account: "co_moilab"
+
+  genomicsdb:
+    cpus_per_task: 12
+    runtime: 4320
+    slurm_partition: "savio4_htc"
+    slurm_account: "co_moilab"
 
   # ----------------------------------------------------------------------
   #     mpileup
@@ -202,11 +214,15 @@ set-resources:
     slurm_partition: "savio4_htc"
 
   # ----------------------------------------------------------------------
-  #     joint_geno
+  #     bcftools_merge
   # ----------------------------------------------------------------------
-
-  joint_geno:
-    mem_mb: 28800
-    threads: 3
+ 
+  bcftools_merge:
+    mem_mb: 48000
+    cpus_per_task: 5
     runtime: 4320
 
+  bcftools_concat:
+    mem_mb: 48000
+    cpus_per_task: 5
+    runtime: 4320

@@ -7,7 +7,7 @@ The directory roughly follows a CookieCutter directory structure.
 
 ## Running the pipeline
 
-`module load anaconda3 gatk samtools`
+`module load anaconda3 bio/gatk java bio/samtools bio/bcftools`
 `conda activate grenepipe`
 `rm -r .snakemake/metadata .snakemake/log .snakemake/slurm_logs`
 `snakemake --executor slurm --profile profiles/ --use-conda --rerun-triggers input`
@@ -52,33 +52,33 @@ The directory roughly follows a CookieCutter directory structure.
 * Sort, add read groups, and deduplicate BAM files with samtools and GATK.
 * Assess mapping quality with qualimap's bamqc
 * Assess the DNA damage AdDeam
-* As some genotypes were sequenced mutliple times, BAM files from multiple high-quality runs were merged with `samtools merge` and processed as described above
+* As some genotypes were sequenced mutliple times, BAM files from multiple high-quality runs were merged with `samtools merge` and processed as described above. This will likely change going forward to use the highest coverage bam.
 
 3. Extracting plastid genome reads
 * Reads were independently mapped to a P. tremuloides chloroplast genome (MW376839.1) using bwa-mem2
 * `samtools sort` was used to sort BAM files
 * `samtools fastq` was used to convert BAMs back to fastq files, excluding unmapped reads and singletons. Pair-end reads were seperated into two files
 
-4. Variant calling and filtering
-* Variants are initially called with bcftools mpileup. Quality of SNPs is assed between each filtering step.
-	Raw SNPs: 90,102,90  
-* Variants are hard filtered for biallelic sites, MQ > 40, and QUAL > 40.
-	SNPs after hard filtering: 61,364,088
-* Variants are then filtered for: 
-        10 < DP < 90 & less than 10% missing data: 544,839 
+4. Ploidy determination
+* Variants were intitally called with samtools mpileup, as it is efficient and fast.
+* Ploidy was determined using `gbs2ploidy` following recommended protocol.
+* Heterozygous sites were selected and filtered (MQ > 40, QUAL > 40, DP > 10, DP < 90, bialleleic) 
+* The allele ratio with the highest posterior probability was used to assign ploidy (`data/gbs2ploidy/flow_cyt_predictions.csv`)
+
+5. Genotyping and variant filtering
+* Variants were called with GATK haplotype caller, per chromosome per genotype to reduce runtime.
+* GVCFs were merged for each genotype and GATK GenotypeGVCFs was used to genotype each individual seperately, specifying their ploidy determined with gbs2ploidy.  
+* BCFtools merge was used to combine GVCFs into 1 Mb regions. GATK SelectVariants was used to extract SNPs:
+	Raw SNPs: 49,979,789 (n = 1,100)
+* Variants were hard filtered for biallelic sites, MQ > 40, and QUAL > 40.
+	SNPs after hard filtering: 35,819,008
+* Variants were then filtered for min genotype depth, genotype depth max three times the mean, and missing data at each variant: 
+        10 < DP < 90 & less than 10% missing data: 26,589,983  
 * After filtering, 87 samples (`metadata/samples_to_drop_from_vcf.txt`) were excluded on the critera of: genotype was duplicately sequenced (kept the better of the two), mean coverage < 10, percent of missing SNPs > 20%, ploidy could not be determined (see below), percent of reads mapped < 85% 
 * Multiple LD filters were assessed:
 	+ one SNP per 500 bp
 	+ LD thinning with PLINK with r^2 threshold of 0.1
 	+ Estimation of LD with `ldsep`
-
-5. Ploidy determination
-* Ploidy was determined using `gbs2ploidy`
-* Heterozygous sites from the filtered vcf were used (without LD filter applied, before dropping genotypes)
-* The allele ratio with the highest posterior probability was used to assign ploidy (`data/gbs2ploidy/flow_cyt_predictions.csv`)
-
-6. Genotyping
-* `updog` was used for genotyping with dosage specified by the called ploidy 
 
 X. Population structure
 * 

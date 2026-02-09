@@ -4,93 +4,109 @@
 
 library(dplyr)
 library(ggplot2)
+library(data.table)
+library(vcfR)
 
-##############
 ### Raw snps ----
-##############
+
+# count SNPs in every VCF
+dir <- "/global/scratch/users/arphillips/reports/filtering/"
+files <- list.files(path = dir, pattern = "wgs_aspen.all.genos.Chr*")
+size <- lapply(files, function(x){dim(read.table(paste0(dir, x)))[1]})
+
+paste0("Number of raw SNPs: ", sum(unlist(size)))
 
 # Load quality table for one chromosome
-chr <- "Chr01"
-# qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.", chr ,".table") , header = T)
-# head(qual)
-# dim(qual)
+for (i in c(paste0(0, 1:9), 10:19)){
+  chr <- paste0("Chr", i)
+  qual_list <- lapply(paste0(dir, files)[grepl(x = files, pattern = chr )], function(x){read.table(x, header = T)})
+  qual_mat <- do.call(rbind, qual_list)
 
-chr_files <- Sys.glob(paste0("/global/scratch/users/arphillips/reports/filtering/wgs_aspen.", chr ,"*.table"))
-chr_list <- lapply(chr_files, function(x) read.table(x, header = T))
-qual <- do.call(rbind, chr_list)
+  genos = "1100"
 
-genos = "1207"
+  pdf(paste0("/global/scratch/users/arphillips/reports/filtering/alignment_quality.", Sys.Date(), ".", chr ,".pdf"))
 
-pdf(paste0("/global/scratch/users/arphillips/reports/filtering/alignment_quality.", Sys.Date(), ".", chr ,".pdf"))
-
-qual %>%
-  ggplot(aes(x=QUAL)) +
-  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.9, adjust = 0.8) +
-  xlim(c(0,150)) +
-  theme_bw() +
-  geom_vline(xintercept = 20, color = "black")+
-  geom_vline(xintercept = 30, color = "black") +
-  xlab("Base quality (QUAL)") +
-  ggtitle(paste0(chr))
-
-qual %>%
-  ggplot(aes(x=MQ)) +
-  geom_histogram(fill="#69b3a2", color="#e9ecef", alpha=0.9) +
-  xlim(c(0,65)) + # bwa-mem doesn't go above MQ of 60
-  theme_bw() +
-  geom_vline(xintercept = 20, color = "black")+
-  geom_vline(xintercept = 30, color = "black") +
-  xlab("Mapping quality (MQ)") +
-  ggtitle(paste0(chr, ", n = ", genos ))
-
-qual %>%
-  ggplot(aes(x=DP)) +
-  geom_histogram(fill="#69b3a2", color="#e9ecef") +
-  xlim(c(0,10000)) +
-  theme_bw() +
-  xlab("Total depth at each site (DP)") +
-  ggtitle(paste0(chr, ", n = ", genos ))
-
-dev.off()
+  print(qual_mat %>%
+    ggplot(aes(x=QUAL)) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.9, adjust = 0.8) +
+    xlim(c(0,200)) +
+    theme_bw() +
+    geom_vline(xintercept = 20, color = "black")+
+    geom_vline(xintercept = 30, color = "black") +
+    xlab("Base quality (QUAL)") +
+    ggtitle(paste0(chr, ", n = ", genos )))
+  
+  print(qual_mat %>%
+    ggplot(aes(x=MQ)) +
+    geom_histogram(fill="#69b3a2", color="#e9ecef", alpha=0.9) +
+    xlim(c(0,65)) + # bwa-mem doesn't go above MQ of 60
+    theme_bw() +
+    geom_vline(xintercept = 20, color = "black")+
+    geom_vline(xintercept = 30, color = "black") +
+    xlab("Mapping quality (MQ)") +
+    ggtitle(paste0(chr, ", n = ", genos )))
+  
+  print(qual_mat %>%
+    ggplot(aes(x=DP)) +
+    geom_histogram(fill="#69b3a2", color="#e9ecef") +
+    xlim(c(0,10000)) +
+    theme_bw() +
+    xlab("Total depth at each site (DP)") +
+    ggtitle(paste0(chr, ", n = ", genos )))
+  
+  dev.off()
+  }
 
 # Playing around with filter thresholds
-dim(qual)
+dim(qual_mat)
 
 dplyr::filter(qual, QUAL > 20, MQ > 20) %>%
   dim()
 
-dplyr::filter(qual, QUAL > 30, MQ > 30) %>%
+dplyr::filter(qual_mat, QUAL > 40, MQ > 40) %>%
   dim()
 
-##############
 ### Filtering for Depth ----
-##############
+
+# counting SNPs
+dir <- "/global/scratch/users/arphillips/reports/filtering/depth/"
+files <- list.files(path = dir, pattern = "wgs_aspen.all.genos.Chr*")
+# size <- lapply(files, function(x){dim(read.table(paste0(dir, x)))[1]})
+# 
+# paste0("Number of hard filtered SNPs: ", sum(unlist(size)))
+
+fread(paste0(dir, files[1])) %>% replace(is.na(.), 0) %>%
+  colMeans(na.rm = T)
+
+fread(paste0(dir, files[1])) %>% dim()
+
 # Load quality table
 chr <- "Chr02"
-# qual <- read.table(paste0("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.", chr ,".filtered.nocall.table") , header = T)
 
-chr_files <- Sys.glob(paste0("/global/scratch/users/arphillips/reports/filtering/depth/wgs_aspen.", chr ,"*.table"))
-chr_list <- lapply(chr_files[1], function(x) read.table(x, header = T))
-qual <- do.call(rbind, chr_list)
+# dp_list <- lapply(paste0(dir, files)[grepl(x = files, pattern = chr )], function(x){read.table(x, header = T)})
+genodp_list <- lapply(paste0(dir, files)[grepl(x = files, pattern = chr )], function(x) {fread(x) %>% 
+    replace(is.na(.), 0) %>%
+    colMeans(na.rm =T)} )
+dp_mat <- do.call(rbind, genodp_list)
+dim(dp_mat)
+# dp_mat <- rbindlist(genodp_list)
 
-# head(qual)
-# str(qual)
-dim(qual)
+dp_mat[1:10,1:10]
 
-qual[1:10,1:10]
-
-genotypes <- dim(qual)[2] - 2
+mediandp <-  apply(dp_mat, 2, median)
+hist(mediandp)
+mean(mediandp)
 
 # Prep table
 # qual <- qual[qual$CHROM != "CHROM",] # shouldn't be necessary if files are properly joined
 
-qual[,3:dim(qual)[2]] <- lapply(qual[,3:dim(qual)[2]], as.numeric)
-str(qual)
-dim(qual)
+# dp_mat <- lapply(dp_mat, as.numeric)
+# str(dp_mat)
+# dim(dp_mat)
 
 # Replace 0s with NA
-qual[qual == 0] <- "NA"
-dim(qual)
+# dp_mat[dp_mat == 0] <- "NA"
+# dim(dp_mat)
 
 # Estimate mean genotype depth across sites
 geno_dp <- colMeans(qual[3:dim(qual)[2]], na.rm = T)
@@ -145,4 +161,11 @@ hist(genos_with_data,
      xlab = "Number of genotypes sequenced", 
      main = "Number of genotypes sequenced per site", 
      ylab = "Number of sites")
+
+# Final number of SNP ----
+
+dir <- "/global/scratch/users/arphillips/data/processed/filtered_snps/"
+files <- list.files(path = dir, pattern = "*.nocall01.10dp90.vcf.gz$", full.names = T)
+size <- lapply(files, function(x){read.vcfR(x) %>% extract.gt(element = "GT") %>% dim()})
+head(size)
 
