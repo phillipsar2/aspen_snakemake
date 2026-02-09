@@ -6,12 +6,13 @@ Snakemake (v9.14.5) pipeline for variant calling in a large quaking aspen WGS da
 The directory roughly follows a CookieCutter directory structure.
 
 ## Running the pipeline
-
-`module load anaconda3 bio/gatk java bio/samtools bio/bcftools`
-`conda activate grenepipe`
-`module load java bio/gatk bio/bcftools bio/samtools`
-`rm -r .snakemake/metadata .snakemake/log .snakemake/slurm_logs`
-`snakemake --executor slurm --profile profiles/ --use-conda --rerun-triggers input`
+<pre>
+module load anaconda3 bio/gatk java bio/samtools bio/bcftools
+conda activate grenepipe
+module load java bio/gatk bio/bcftools bio/samtools
+rm -r .snakemake/metadata .snakemake/log .snakemake/slurm_logs
+snakemake --executor slurm --profile profiles/ --use-conda --rerun-triggers input
+</pre>
 
 ## Project organization
 <pre>
