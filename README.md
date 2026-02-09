@@ -28,8 +28,25 @@ The directory roughly follows a CookieCutter directory structure.
 |  
 ├─  environment.yml  
 ├─  scripts  
-│    ├── README.md  
-│    └── filtering       <- Custom scripts for variant filtering  
+│    ├── addeam_plots.R 			<- visualize AdDeam outputs 
+│    ├── get_other_poplars.sh 		<- download other poplar sequences
+│    ├── nquack/					<- nQuack R scripts
+│    ├── get_clim_data.R			<- download climate data
+│    ├── megametadata.R				<- merge metadata files
+│    ├── plot_singleread_pca.R		<- plot ANGSD pca
+│    ├── updog.R					<- run Updog
+│    ├── minimap_TOZ19.sh			<- mapping TOZ19 sequenences with minimap
+│    ├── rona.R						<- draft RONA script
+│    ├── bamqc_wgs.R				<- plot Qualimap stats
+│    ├── gusrelate_wgs.R			<- Kinship matrix with gusrelate
+│    ├── s_linked_locus.R			<- plotting depth around TOZ19
+│    ├── blastn_TOZ19.sh			<- blast of TOZ19 sequences 
+│    ├── lfmm.R						<- GEA with LFMM
+│    ├── pca.R						<- PCA on genotypes
+│    ├── snp_quality_wgs.R			<- plot SNP quality stats for filtering
+│    ├── make_ploidy_geno_file.R 	<- create ploidy ID file for genotyping from gbs2ploidy outputs
+│    ├── gbs2ploidy.R				<- run gbs2ploidy
+│    └── plot_gbs2ploidy.R			<- plot gbs2ploidy output
 |  
 ├── data  
 │    ├── raw 		 <- Original data dump  
