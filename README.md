@@ -47,6 +47,10 @@ The directory roughly follows a CookieCutter directory structure.
 │    ├── make_ploidy_geno_file.R 	<- create ploidy ID file for genotyping from gbs2ploidy outputs
 │    ├── gbs2ploidy.R				<- run gbs2ploidy
 │    └── plot_gbs2ploidy.R			<- plot gbs2ploidy output
+|
+├── ref			<- reference genome sequences  
+|
+├── metadata	<- all metadata files used across analyses
 |  
 ├── data  
 │    ├── raw 		 <- Original data dump  
