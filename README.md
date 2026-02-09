@@ -9,6 +9,7 @@ The directory roughly follows a CookieCutter directory structure.
 
 `module load anaconda3 bio/gatk java bio/samtools bio/bcftools`
 `conda activate grenepipe`
+`module load java bio/gatk bio/bcftools bio/samtools`
 `rm -r .snakemake/metadata .snakemake/log .snakemake/slurm_logs`
 `snakemake --executor slurm --profile profiles/ --use-conda --rerun-triggers input`
 
@@ -16,11 +17,14 @@ The directory roughly follows a CookieCutter directory structure.
 <pre>
 ├── README.md  
 |  
-├── rules  
-|    ├── calling.smk  
-|    ├── ploidy_sex.smk  <- rules to determine ploidy and sex
-|    ├── filtering.smk  
-|    └── mapping.smk	 <- rules for aligning raw data to the reference  	
+├── rules 
+|    ├── mapping.smk	       		<- processing and aligning raw data to the reference
+|    ├── calling.smk           		<- variant calling and filtering with bcftools 
+|    ├── updog_genotyping.smk  		<- determine ploidy and test rules for updog genotyping
+|    ├── gatk_genotyping.smk 		<- variant calling and filtering with GATK
+|    ├── mapping_otherpoplar.smk	<- draft rules for mapping other poplar species
+|    ├── ploidy_sex.smk				<- finding TOZ19	
+|    └── nquack.smk					<- running nQuack for ploidy determination  	
 |  
 ├─  environment.yml  
 ├─  scripts  
@@ -43,29 +47,29 @@ The directory roughly follows a CookieCutter directory structure.
 
 ## Workflow overview
 
-1. Pre-processing of reads
+1. Pre-processing of reads (`rules/mapping.smk`)
 * Assess read quality with fastqc
 * Trim reads with fastp and re-evaluate quality. Reads are trimmed via sliding windows (4 bp windows, min quality of 15) and automated detection of adapters.
 
-2. Mapping
+2. Mapping (`rules/mapping.smk`)
 * Map reads to the reference with bwa-mem2
 * Sort, add read groups, and deduplicate BAM files with samtools and GATK.
 * Assess mapping quality with qualimap's bamqc
 * Assess the DNA damage AdDeam
-* As some genotypes were sequenced mutliple times, BAM files from multiple high-quality runs were merged with `samtools merge` and processed as described above. This will likely change going forward to use the highest coverage bam.
+* As some genotypes were sequenced mutliple times, BAM files from multiple high-quality runs were merged with `samtools merge` and processed as described above. This step will removed going forward and replace with only keeping the highest quality BAM. This prevents accidentally merging samples not from the same genotype/clone. 
 
-3. Extracting plastid genome reads
+3. Extracting plastid genome reads (`rules/plastid.smk`)
 * Reads were independently mapped to a P. tremuloides chloroplast genome (MW376839.1) using bwa-mem2
 * `samtools sort` was used to sort BAM files
 * `samtools fastq` was used to convert BAMs back to fastq files, excluding unmapped reads and singletons. Pair-end reads were seperated into two files
 
 4. Ploidy determination
-* Variants were intitally called with samtools mpileup, as it is efficient and fast.
-* Ploidy was determined using `gbs2ploidy` following recommended protocol.
+* Variants were intitally called with samtools mpileup, as it is efficient and fast. (`rules/calling.smk`)
+* Ploidy was determined using `gbs2ploidy` following recommended protocol. (`rules/updog_genotyping.smk`)
 * Heterozygous sites were selected and filtered (MQ > 40, QUAL > 40, DP > 10, DP < 90, bialleleic) 
 * The allele ratio with the highest posterior probability was used to assign ploidy (`data/gbs2ploidy/flow_cyt_predictions.csv`)
 
-5. Genotyping and variant filtering
+5. Genotyping and variant filtering (`rules/gatk_genotyping.smk`)
 * Variants were called with GATK haplotype caller, per chromosome per genotype to reduce runtime.
 * GVCFs were merged for each genotype and GATK GenotypeGVCFs was used to genotype each individual seperately, specifying their ploidy determined with gbs2ploidy.  
 * BCFtools merge was used to combine GVCFs into 1 Mb regions. GATK SelectVariants was used to extract SNPs:
@@ -84,6 +88,6 @@ X. Population structure
 * 
 
 X. Determining sex
-* The TOZ19 sex locus region was identified by mapping the *P. trichocarpa* genomic sequence to the reference with minimap2 (the reference is Male)
+* The TOZ19 sex locus region was identified by mapping the *P. trichocarpa* genomic sequence to the reference with minimap2 (the reference is Male) (`scripts/minimap_TOZ19.sh`)
 * The sex-linked region was identified by mapping the *P. tremuloides* concensus sequence from Pakull et al. (2014) to the reference with minimap2 and blastn using the scripts `scripts/blastn_TOZ19.sh` and  `scripts/minimap_TOZ19.sh`
-* Samtools depth is used to extract the per-bp coverage of the TOZ19 region and then mean coverage of the region is calculated.
+* Samtools depth is used to extract the per-bp coverage of the TOZ19 region and then mean coverage of the region is calculated (`rules/ploidy_sex.smk`). This didn't work very well.
