@@ -43,7 +43,7 @@ rule haplotype_caller:
         ref = config["data"]["reference"]["genome"], 
         bam = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{geno}.dedup.bam" 
     output:
-        "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz"
+        "data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz"
     params:
         region = "{region}",
         ploidy = "{geno_ploidy}"

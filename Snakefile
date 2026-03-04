@@ -42,16 +42,16 @@ MIN_DP = ["10"]
 #PLOIDY = ["diploid", "triploid"]
 
 # MERGE contains a list of the bams that belong to each genotype (GENO) so they can be merged
-file = pd.read_csv("/global/scratch/users/arphillips/reports/filestomerge.08122025.txt", sep = " ", header = 0)
-MERGE_A = list(file.Merge_A)
-MERGE_B = list(file.Merge_B)
-GENO = list(file.Genotype)
+#file = pd.read_csv("reports/filestomerge_or_resolve.08202025.txt", sep = " ", header = 0)
+#MERGE_A = list(file.Merge_A)
+#MERGE_B = list(file.Merge_B)
+#GENO = list(file.Genotype)
 #print(GENO)
 
 # Ploidy genotype pairing
 #pgfile = pd.read_csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/ploidy.geno.1127.2025-09-30.csv", sep = ",", header = 0)
-#pgfile = pd.read_csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/ploidy.geno.1127.2025-09-30.triploids.csv", sep = ",", header = 0)
-pgfile = pd.read_csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/california.ploidy.geno.01-20-2026.triploids.csv",sep = ",", header = 0)
+pgfile = pd.read_csv("metadata/ploidy.geno.1127.2025-09-30.triploids.csv", sep = ",", header = 0)
+#pgfile = pd.read_csv("metadata/california/california.ploidy.geno.01-20-2026.triploids.csv",sep = ",", header = 0)
 GENOTYPE =  list(pgfile["sample"])
 GENOTYPE_PLOIDY = list(pgfile.ploidy)
 
@@ -83,7 +83,7 @@ rule all:
 #        map_plas = expand("/global/scratch/users/arphillips/data/interm/mapped_chl/{sample}.mapped_chl.bam", sample = SAMPLE)
 #        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
       ## Genotyping
-         haplotype = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz", geno = GENOTYPE, region = CHR, geno_ploidy = GENOTYPE_PLOIDY)
+         haplotype = expand("data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz", geno = GENOTYPE, region = CHR, geno_ploidy = GENOTYPE_PLOIDY)
 #        merge_gvcfs = expand("/global/scratch/users/arphillips/data/vcf/gatk/merged/{geno}.g.vcf.gz", geno = GENOTYPE),
 #        genotyping = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.g.vcf.gz", zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
 #        bcftools_merge = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.{region}.g.vcf.gz", region = REGION)
