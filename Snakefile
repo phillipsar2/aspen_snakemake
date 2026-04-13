@@ -83,8 +83,8 @@ rule all:
 #        map_plas = expand("/global/scratch/users/arphillips/data/interm/mapped_chl/{sample}.mapped_chl.bam", sample = SAMPLE)
 #        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
       ## Genotyping
-         haplotype = expand("data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz", geno = GENOTYPE, region = CHR, geno_ploidy = GENOTYPE_PLOIDY)
-#        merge_gvcfs = expand("/global/scratch/users/arphillips/data/vcf/gatk/merged/{geno}.g.vcf.gz", geno = GENOTYPE),
+#         haplotype = expand("data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz", geno = GENOTYPE, region = CHR, geno_ploidy = GENOTYPE_PLOIDY)
+        merge_gvcfs = expand("data/vcf/gatk/merged/{geno}_p{geno_ploidy}.g.vcf.gz", geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY),
 #        genotyping = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.g.vcf.gz", zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
 #        bcftools_merge = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.{region}.g.vcf.gz", region = REGION)
 
@@ -93,7 +93,7 @@ rule all:
 # =================================================================================================
 #include: "rules/mapping.smk"
 #include: "rules/mapping_otherpoplar.smk"
-include: "rules/calling.smk"
+#include: "rules/calling.smk"
 #include: "rules/ploidy_sex.smk"
 #include: "rules/plastid.smk"
 include: "rules/gatk_genotyping.smk"

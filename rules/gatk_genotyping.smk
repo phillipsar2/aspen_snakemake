@@ -61,14 +61,15 @@ rule haplotype_caller:
 
 # (2) Merge VCFs
 ## Merge vcfs for each genotype then do genotyping
+## database approach doesn't work for the scale of data
 rule merge_gvcfs:
     input: 
-        vcf = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{{geno}}_p{{geno_ploidy}}.{region}.g.vcf.gz",region = CHR),
+        vcf = expand("data/vcf/gatk/called/{{geno}}_p{{geno_ploidy}}.{region}.haplo.g.vcf.gz", region = CHR),
     output:
-        "/global/scratch/users/arphillips/data/vcf/gatk/merged/{geno}_p{geno_ploidy}.haplo.g.vcf.gz"
+        "data/vcf/gatk/merged/{geno}_p{geno_ploidy}.g.vcf.gz"
     params:
-        pre = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}",
-        list = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}.list"
+        pre = "data/vcf/gatk/called/{geno}",
+        list = "data/vcf/gatk/called/{geno}.list"
     shell:
         """
         ls {params.pre}*.g.vcf.gz > {params.list}
@@ -83,14 +84,13 @@ rule merge_gvcfs:
 ### double bracket masks geno wildcard in input
 rule indv_geno:
     input:
-        vcf = "/global/scratch/users/arphillips/data/vcf/gatk/merged/{geno}_p{geno_ploidy}.g.vcf.gz",
+        vcf = "data/vcf/gatk/merged/{geno}_p{geno_ploidy}.g.vcf.gz",
         ref = config["data"]["reference"]["genome"]
     output:
-       "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.g.vcf.gz"
+       "data/vcf/gatk/called/{geno}_p{geno_ploidy}.g.vcf.gz"
     params:
         ploidy = "{geno_ploidy}",
-        tmpdir =  "/global/scratch/users/arphillips/tmp/joint_geno/{geno}",
-        pre = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}"
+        tmpdir =  "global/scratch/users/arphillips/tmp/joint_geno/{geno}",
     shell:
         """
         mkdir -p {params.tmpdir}
@@ -114,73 +114,13 @@ rule indv_geno:
 
 rule bcftools_merge:
     input:
-        vcfs = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.g.vcf.gz", zip,  geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
+        vcfs = expand("data/vcf/gatk/called/{geno}_p{geno_ploidy}.g.vcf.gz", zip,  geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
     output:
-        "/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.{region}.g.vcf.gz"
+        "data/vcf/gatk/called/wgs_aspen.all.genos.{region}.g.vcf.gz"
     params:
         chr = "{region}",
         vcfs = lambda wildcards, input: input.vcfs 
     shell:
         "bcftools merge {params.vcfs} -m all -r {params.chr} --threads 5 -Oz -o {output}"
 
-
-#rule exclude_MNPs:
-#    input:
-#        vcf = "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.g.vcf.gz",
-#        ref = config["data"]["reference"]["genome"]
-#    output:
-#       "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.nomnps.g.vcf.gz"
-#    shell:
-#        "gatk SelectVariants -R {input.ref} -V {input.vcf} --select-type-to-exclude MNP -O {output}"
-
-# (3) Create a database with GenomicsDB
-#rule split_intervals:
-#    input:
-#        ref = config["data"]["reference"]["genome"]
-#    output:
-#        int = expand("/global/scratch/users/arphillips/data/processed/scattered_intervals/{intv}-scattered.interval_list", intv = INTERVALS)
-#    params:
-#        regions = config["data"]["reference"]["contigs"],
-#        dir = "/global/scratch/users/arphillips/data/processed/scattered_intervals/"
-#    shell:
-#        "gatk SplitIntervals -R {input.ref} -L {params.regions} --scatter-count 200 -O {params.dir}"
-
-#rule genomicsdb:
-#    input:
-#        gvcfs = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.nomnps.g.vcf.gz", zip,  geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY),
-#        region = "/global/scratch/users/arphillips/data/processed/scattered_intervals/{intv}-scattered.interval_list",
-#        map = "/global/scratch/users/arphillips/data/vcf/gatk/called/aspen.sample_map"
-#    output:
-#        directory("/global/scratch/users/arphillips/data/interm/combined_database_bpres/{intv}")
-#    params:
-#        tmp = "/global/scratch/users/arphillips/tmp/genomicsdbimport/{intv}"
-#    wildcard_constraints:
-#        intv = r"\d{4}"
-#    shell:
-#        """
-#        mkdir -p {params.tmp}
-#        gatk --java-options \"-Xmx90g -Xms90g\" \
-#        GenomicsDBImport \
-#        --genomicsdb-workspace-path {output} \
-#        --batch-size 50 \
-#        --reader-threads 8 \
-#        --sample-name-map {input.map} \
-#        --intervals {input.region} --tmp-dir {params.tmp}
-#        rm -rf {params.tmp}
-#        """
-
-# (4) Conslidate into large gvcf
-#rule big_gvcf:
-#    input:
-#        ref = config["data"]["reference"]["genome"],
-##        db = "gendb://global/scratch/users/arphillips/data/interm/combined_database_bpres/{interval}",
-#        db2 = "/global/scratch/users/arphillips/data/interm/combined_database_bpres/{intv}"
-#    output:
-#        "/global/scratch/users/arphillips/data/vcf/gatk/genotyped/wgs_aspen.all.genos.{intv}.g.vcf.gz"
-#    params:
-#        db = "gendb://global/scratch/users/arphillips/data/interm/combined_database_bpres/{intv}"
-#    wildcard_constraints:
-#        intv = r"\d{4}"
-#    shell:
-#        "gatk SelectVariants -R {input.ref} -V {params.db} -O {output}"
 
