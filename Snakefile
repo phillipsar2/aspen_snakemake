@@ -49,8 +49,8 @@ MIN_DP = ["10"]
 #print(GENO)
 
 # Ploidy genotype pairing
-#pgfile = pd.read_csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/ploidy.geno.1127.2025-09-30.csv", sep = ",", header = 0)
-pgfile = pd.read_csv("metadata/ploidy.geno.1127.2025-09-30.triploids.csv", sep = ",", header = 0)
+pgfile = pd.read_csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/ploidy.geno.1127.2025-09-30.csv", sep = ",", header = 0)
+#pgfile = pd.read_csv("metadata/ploidy.geno.1127.2025-09-30.triploids.csv", sep = ",", header = 0)
 #pgfile = pd.read_csv("metadata/california/california.ploidy.geno.01-20-2026.triploids.csv",sep = ",", header = 0)
 GENOTYPE =  list(pgfile["sample"])
 GENOTYPE_PLOIDY = list(pgfile.ploidy)
@@ -84,8 +84,7 @@ rule all:
 #        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
       ## Genotyping
 #         haplotype = expand("data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz", geno = GENOTYPE, region = CHR, geno_ploidy = GENOTYPE_PLOIDY)
-        merge_gvcfs = expand("data/vcf/gatk/merged/{geno}_p{geno_ploidy}.g.vcf.gz", geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY),
-#        genotyping = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.g.vcf.gz", zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
+        genotyping = expand("data/vcf/gatk/genotyped/{geno}_p{geno_ploidy}.g.vcf.gz", zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
 #        bcftools_merge = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.{region}.g.vcf.gz", region = REGION)
 
 # =================================================================================================

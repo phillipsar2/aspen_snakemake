@@ -66,7 +66,7 @@ rule merge_gvcfs:
     input: 
         vcf = expand("data/vcf/gatk/called/{{geno}}_p{{geno_ploidy}}.{region}.haplo.g.vcf.gz", region = CHR),
     output:
-        "data/vcf/gatk/merged/{geno}_p{geno_ploidy}.g.vcf.gz"
+        "data/vcf/gatk/merged/{geno}_p{geno_ploidy}.merged.g.vcf.gz"
     params:
         pre = "data/vcf/gatk/called/{geno}",
         list = "data/vcf/gatk/called/{geno}.list"
@@ -80,19 +80,18 @@ rule merge_gvcfs:
         """
 
 # (3) Individually genotype with correct ploidy level specified
-## Merge vcfs for each genotype then do genotyping
-### double bracket masks geno wildcard in input
 rule indv_geno:
     input:
-        vcf = "data/vcf/gatk/merged/{geno}_p{geno_ploidy}.g.vcf.gz",
+        vcf = "data/vcf/gatk/merged/{geno}_p{geno_ploidy}.merged.g.vcf.gz",
         ref = config["data"]["reference"]["genome"]
     output:
-       "data/vcf/gatk/called/{geno}_p{geno_ploidy}.g.vcf.gz"
+       "data/vcf/gatk/genotyped/{geno}_p{geno_ploidy}.g.vcf.gz"
     params:
         ploidy = "{geno_ploidy}",
         tmpdir =  "global/scratch/users/arphillips/tmp/joint_geno/{geno}",
     shell:
         """
+        gatk IndexFeatureFile -I {input.vcf}
         mkdir -p {params.tmpdir}
         gatk GenotypeGVCFs \
         -R {input.ref} \
