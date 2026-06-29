@@ -4,7 +4,7 @@ from random import randint
 import datetime
 
 # Sample names (JGI filenames)
-SAMPLE = glob_wildcards("/global/scratch/users/arphillips/raw/jgi_wgs/{sample}.fastq.gz").sample
+SAMPLE = glob_wildcards("/global/scratch/users/arphillips/data/fastq/{sample}.fastq.gz").sample
 #print(SAMPLE)
 
 # Other poplar samples (filenames)
@@ -84,8 +84,9 @@ rule all:
 #        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
       ## Genotyping
 #         haplotype = expand("data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz", geno = GENOTYPE, region = CHR, geno_ploidy = GENOTYPE_PLOIDY)
-        genotyping = expand("data/vcf/gatk/genotyped/{geno}_p{geno_ploidy}.g.vcf.gz", zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
-#        bcftools_merge = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/wgs_aspen.all.genos.{region}.g.vcf.gz", region = REGION)
+#        genotyping = expand("data/vcf/gatk/genotyped/{geno}_p{geno_ploidy}.g.vcf.gz", zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
+      ## Filtering
+        qual = expand("reports/filtering/{geno}_p{geno_ploidy}.table",  zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
 
 # =================================================================================================
 #     Rule Modules
@@ -95,4 +96,5 @@ rule all:
 #include: "rules/calling.smk"
 #include: "rules/ploidy_sex.smk"
 #include: "rules/plastid.smk"
-include: "rules/gatk_genotyping.smk"
+#include: "rules/gatk_genotyping.smk"
+include: "rules/filtering.smk"

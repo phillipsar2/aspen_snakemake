@@ -3,7 +3,7 @@
 
 rule fastqc:
     input:
-        "/global/scratch/users/arphillips/raw/jgi_wgs/{sample}.fastq.gz"
+        "/global/scratch/users/arphillips/data/fastq/{sample}.fastq.gz"
     output:
         "/global/scratch/users/arphillips/qc/fastqc/{sample}_fastqc.zip"
     params:
@@ -30,7 +30,7 @@ rule fastqc:
 # --cut_front is sliding window trimming from 5' ot 3'
 rule fastp_trim:
     input:
-        fastq = "/global/scratch/users/arphillips/raw/jgi_wgs/{sample}.fastq.gz",
+        fastq = "/global/scratch/users/arphillips/data/fastq/{sample}.fastq.gz",
     output:
         trim = temp("/global/scratch/users/arphillips/data/trimmed/{sample}.trim.fastq.gz")
 #    conda:

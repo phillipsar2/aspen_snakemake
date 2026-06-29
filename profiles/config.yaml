@@ -217,10 +217,10 @@ set-resources:
   #     bcftools_merge
   # ----------------------------------------------------------------------
  
-  bcftools_merge:
+  merge_all:
     mem_mb: 48000
-    cpus_per_task: 5
-    runtime: 4320
+    cpus_per_task: 10
+    runtime: "4320m"
 
   bcftools_concat:
     mem_mb: 48000
