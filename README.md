@@ -19,38 +19,31 @@ snakemake --executor slurm --profile profiles/ --use-conda --rerun-triggers inpu
 |  
 ├── rules 
 |    ├── mapping.smk	       		<- processing and aligning raw data to the reference
-|    ├── calling.smk           		<- variant calling and filtering with bcftools 
-|    ├── updog_genotyping.smk  		<- determine ploidy and test rules for updog genotyping
+|    ├── bcftools_genotyping.smk        <- ploidy estimation 
 |    ├── gatk_genotyping.smk 		<- variant calling and filtering with GATK
-|    ├── mapping_otherpoplar.smk	<- draft rules for mapping other poplar species
-|    ├── ploidy_sex.smk				<- finding TOZ19	
-|    └── nquack.smk					<- running nQuack for ploidy determination  	
+|    └── filteirng.smk			<- variant filtering
 |  
 ├─  environment.yml  
 ├─  scripts  
-│    ├── addeam_plots.R 			<- visualize AdDeam outputs 
+│    ├── addeam_plots.R 		<- visualize AdDeam outputs 
 │    ├── get_other_poplars.sh 		<- download other poplar sequences
-│    ├── nquack/					<- nQuack R scripts
-│    ├── get_clim_data.R			<- download climate data
-│    ├── megametadata.R				<- merge metadata files
+│    ├── get_clim_data.R		<- download climate data
+│    ├── megametadata.R			<- merge metadata files
 │    ├── plot_singleread_pca.R		<- plot ANGSD pca
-│    ├── updog.R					<- run Updog
-│    ├── minimap_TOZ19.sh			<- mapping TOZ19 sequenences with minimap
-│    ├── rona.R						<- draft RONA script
-│    ├── bamqc_wgs.R				<- plot Qualimap stats
-│    ├── gusrelate_wgs.R			<- Kinship matrix with gusrelate
-│    ├── s_linked_locus.R			<- plotting depth around TOZ19
-│    ├── blastn_TOZ19.sh			<- blast of TOZ19 sequences 
-│    ├── lfmm.R						<- GEA with LFMM
-│    ├── pca.R						<- PCA on genotypes
-│    ├── snp_quality_wgs.R			<- plot SNP quality stats for filtering
+│    ├── minimap_TOZ19.sh		<- mapping TOZ19 sequenences with minimap
+│    ├── rona.R				<- draft RONA script
+│    ├── gusrelate_wgs.R		<- Kinship matrix with gusrelate
+│    ├── s_linked_locus.R		<- plotting depth around TOZ19
+│    ├── blastn_TOZ19.sh		<- blast of TOZ19 sequences 
+│    ├── lfmm.R				<- GEA with LFMM
+│    ├── pca.R				<- PCA on genotypes
+│    ├── snp_quality_wgs.R		<- plot SNP quality stats for filtering
 │    ├── make_ploidy_geno_file.R 	<- create ploidy ID file for genotyping from gbs2ploidy outputs
-│    ├── gbs2ploidy.R				<- run gbs2ploidy
-│    └── plot_gbs2ploidy.R			<- plot gbs2ploidy output
+│    └── plot_gbs2ploidy.R		<- plot gbs2ploidy output
 |
 ├── ref			<- reference genome sequences  
 |
-├── metadata	<- all metadata files used across analyses
+├── metadata		<- all metadata files used across analyses
 |  
 ├── data  
 │    ├── raw 		 <- Original data dump  
