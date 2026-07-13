@@ -132,7 +132,7 @@ rule mark_dups:
         bai = "/global/scratch/users/arphillips/data/interm/addrg/{sample}.rg.bai"
     output:
 #        bam = "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam"
-        bam = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam",
+        bam = "data/bams/{sample}.dedup.bam",
     params:
         tmp = "/global/scratch/users/arphillips/temp/mark_dups/{sample}"
 #    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/gatk.yaml"
@@ -162,15 +162,11 @@ rule mark_dups:
 # then remove all the excess files we don't need
 rule bamqc:
     input:
-        "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam",
-#        "/global/scratch/users/arphillips/data/interm/mark_dups/{sample}.dedup.bam"
+        "data/bams/{sample}.dedup.bam",
     output:
-        "/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt"
+        "reports/bamqc/{sample}_stats/genome_results.txt"
     params:
-        dir = "/global/scratch/users/arphillips/reports/bamqc/{sample}_stats"
-#    conda: "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/envs/qualimap.yaml"
-#    benchmark:
-#        "/global/scratch/users/arphillips/benchmarks/{sample}.bamqc.benchmark.txt"
+        dir = "reports/bamqc/{sample}_stats"
     shell:
         """
         qualimap bamqc \

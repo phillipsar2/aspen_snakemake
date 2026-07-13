@@ -40,7 +40,7 @@ printshellcmds: True
 # =================================================================================================
 default-resources:
   slurm_partition: "savio3_htc" 
-  slurm_account:  "co_moilab"
+  slurm_account:  "fc_moilab"
   runtime: "720m"
   cores: 1
   cpus_per_task: 1
@@ -83,7 +83,7 @@ set-resources:
   # savio4_htc is 9.14 GB per core
   bwa_map:
     cpus_per_task: 10
-    runtime: 1440
+    runtime: "1440m"
     mem_mb: 73000
     slurm_partition: "savio4_htc"
     
@@ -94,8 +94,8 @@ set-resources:
 
   samtools_sort:
     mem_mb: 9600
-    threads: 1
-    runtime: 300
+    cpus_per_task: 1
+    runtime: "300m"
 
   # ----------------------------------------------------------------------
   #     mark_dups
@@ -103,8 +103,8 @@ set-resources:
 
   mark_dups:
     mem_mb: 19200
-    threads: 2
-    runtime: 420
+    cpus_per_task: 2
+    runtime: "420m"
 
   # ----------------------------------------------------------------------
   #     merge_bams
@@ -112,8 +112,8 @@ set-resources:
 
   merge_bams:
     mem_mb: 19200
-    threads: 2
-    runtime: 420
+    cpus_per_task: 2
+    runtime: "420m"
     
   # ----------------------------------------------------------------------
   #     bamqc
@@ -121,8 +121,8 @@ set-resources:
 
   bamqc:
     mem_mb: 38400
-    threads: 4
-    runtime: 120
+    cpus_per_task: 4
+    runtime: "120m"
 
   # ----------------------------------------------------------------------
   #     mapDamage

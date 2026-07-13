@@ -58,9 +58,8 @@ rule all:
     input:
       ## Mapping
 #        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam", sample = SAMPLE),
-#        bamqc = expand("/global/scratch/users/arphillips/reports/bamqc/{sample}_stats/genome_results.txt", sample = SAMPLE)
+        bamqc = expand("reports/bamqc/{sample}_stats/genome_results.txt", sample = SAMPLE),
 #        addeam = "/global/scratch/users/arphillips/reports/addeam/plots/damage_report_k3.pdf"
-#        merge_bams = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{merge_A}_{merge_B}.merged.dedup.bam", zip,  merge_A = MERGE_A, merge_B = MERGE_B)
       ## Ploidy calling
 #        gbs2ploidy = expand("/global/scratch/users/arphillips/data/gbs2ploidy/{bam}.propOut.csv", bam = BAM)
       ## Plastids
@@ -69,13 +68,14 @@ rule all:
       ## Genotyping
 #         haplotype = expand("data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz", geno = GENOTYPE, region = CHR, geno_ploidy = GENOTYPE_PLOIDY)
 #        genotyping = expand("data/vcf/gatk/genotyped/{geno}_p{geno_ploidy}.g.vcf.gz", zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
+#        merge_vcfs = expand("data/vcf/gatk/genotyped/wgs_aspen.all.{chr}.g.vcf.gz", chr = CHR)
       ## Filtering
-        qual = expand("reports/filtering/{geno}_p{geno_ploidy}.table",  zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
+#        qual = expand("reports/filtering/{geno}_p{geno_ploidy}.table",  zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
 
 # =================================================================================================
 #     Rule Modules
 # =================================================================================================
-#include: "rules/mapping.smk"
+include: "rules/mapping.smk"
 #include: "rules/bcftools_genotyping.smk"
 #include: "rules/plastid.smk"
 #include: "rules/gatk_genotyping.smk"
