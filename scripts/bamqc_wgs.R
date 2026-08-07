@@ -7,34 +7,44 @@ library(ggplot2)
 library(dplyr)
 
 # Load files and prep
-dir = "/global/scratch/users/arphillips/reports/bamqc"
+dir = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/reports/bamqc"
 qc_files <- list.files(path = dir, pattern = ".bamqc.txt")
 stats <- do.call(cbind, lapply(paste0(dir, "/",qc_files), function(f) read.table(f, header=FALSE)))
-# stats <- read.table("~/aspen/qc/bamqc/stats.bamqc.txt", header = F)
 
 colnames(stats) <- gsub(qc_files, pattern = ".bamqc.txt",replacement = "")
-# colnames(stats) <- c("bams", "numreads", "numdups", "medianinsertsize", "GC", "meancoverage", "meanMQ", "perreadsmapped")
+dim(stats)
 
-tmp9 <- str_split(stats$bamlist, pattern = "/", simplify = T)[,9]
-tmp10 <- str_split(stats$bamlist, pattern = "/", simplify = T)[,10]
-stats$bams <- ifelse(tmp9 == "bams", tmp10, tmp9)
-stats$seqname <- str_split(stats$bams, pattern = ".dedup", simplify = T)[,1]
+# tmp9 <- str_split(stats$bamlist, pattern = "/", simplify = T)[,9]
+# tmp10 <- str_split(stats$bamlist, pattern = "/", simplify = T)[,10]
+# stats$bams <- ifelse(tmp9 == "bams", tmp10, tmp9)
+bams <- list.dirs(path = dir, full.names = F)[-1]
+stats$bams <- bams
+stats$bams <- str_split(stats$bams, pattern = "_stats", simplify = T)[,1]
 
-stats[,c("numdups","numreads")] <- lapply(stats[,c("numdups","numreads")], function(x) gsub(",", "", x))
-stats$GC <- gsub("%", "", stats$GC)
-stats$meancoverage <- gsub("X", "", stats$meancoverage)
-stats$perreadsmapped <- gsub("%)", "", stats$perreadsmapped)
+stats[,c("duplicatedreads","numreads")] <- lapply(stats[,c("duplicatedreads","numreads")], function(x) gsub(",", "", x) %>% as.numeric)
+stats$GC <- gsub("%", "", stats$GC) %>% as.numeric()
+stats$meancov <- gsub("X", "", stats$meancov) %>% as.numeric()
+stats$perreadsmapped <- gsub("%)", "", stats$perreadsmapped) %>% as.numeric()
 
-stats[,2:8] <- lapply(stats[,2:8], as.numeric)
-stats$percentdups <- stats$numdups/stats$numreads * 100
+# stats[,2:8] <- lapply(stats[,2:7], as.numeric)
+stats$percentdups <- stats$duplicatedreads/stats$numreads * 100
 
 head(stats)
 str(stats)
 dim(stats)
 
+
+# subset to new bams
+# bam_dir = "/global/scratch/users/arphillips/data/fastq"
+# bam_files <- list.files(path = bam_dir, pattern = ".fastq.gz") %>% 
+#   gsub(pattern = ".fastq.gz",replacement = "")
+# 
+# stats <- stats[stats$bams %in% bam_files,]
+# dim(stats)
+
 # Load metadata files
 # Megametadata file from scripts/megametadata.R
-megameta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.2025-06-09.csv")
+megameta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.2025-08-26.csv")
 str(megameta)
 dim(megameta)
 
@@ -71,7 +81,7 @@ stats %>%
   labs(x = "Median insert size")
 
 stats %>%
-  ggplot(aes(x = meancoverage)) +
+  ggplot(aes(x = meancov)) +
   geom_histogram(fill="#69b3a2", color="#e9ecef", alpha=0.9) +
   theme_bw() +
   geom_vline(xintercept = mean(stats$meancoverage), color = "black") +

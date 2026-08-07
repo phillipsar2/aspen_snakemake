@@ -8,14 +8,23 @@ library(dplyr)
 # (1) Load and prep metadata files ----
 
 # Load bamlist of existing bams
-dir = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/"
-bamlist <- list.files(path = dir, pattern = "\\.dedup.bam$", )
-bamlist
-length(bamlist)
+# dir = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/"
+# bamlist <- list.files(path = dir, pattern = "\\.dedup.bam$", )
+# bamlist
+# length(bamlist)
+# 
+# seq_names <- lapply(bamlist, gsub, pattern = "dedup.bam", replacement="fastq.gz") %>%
+#   unlist() # turn bams into fastq names
+# length(seq_names)
 
-seq_names <- lapply(bamlist, gsub, pattern = "dedup.bam", replacement="fastq.gz") %>%
-  unlist() # turn bams into fastq names
+# Load fastqlist of new fastq files
+
+dir = "/global/scratch/users/arphillips/data/fastq/"
+seq_names <- list.files(path = dir, pattern = "\\.fastq.gz$", )
+seq_names
 length(seq_names)
+
+bamlist <- paste0(str_split(seq_names, pattern = ".fastq.gz", simplify = T )[,1], "dedup.bam")
 
 ## Deal with merged bams
 merged_files <- seq_names[grep(pattern = "merge", x = seq_names)] 
@@ -23,14 +32,23 @@ fixed_seqnames <- paste0(str_split(merged_files, pattern = "_", simplify = T)[,1
 seq_names[grep(pattern = "merge", x = seq_names)] <- fixed_seqnames # replace uncropped names
 
 #  Load meta data files
-jgi_meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/completed_sequencing_samplereport.d05132025.csv") # JGI metadata file
-# jgi_meta$RQC.Seq.Unit.Name
+jgi_meta1 <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/completed_sequencing_samplereport.d08072026.csv") # JGI metadata file
+jgi_meta2 <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/metadata_in_review_samplereport.d08072026.csv") # JGI metadata file
+jgi_meta3 <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/others_samplereport.d08072026.csv") # JGI metadata file
+
+jgi_meta <- rbind(jgi_meta1, jgi_meta2, jgi_meta3) # jgi_meta$RQC.Seq.Unit.Name
+head(jgi_meta)
 
 ben_meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/all_sites_DO_NOT_SHARE_d02062024.csv")
+head(ben_meta)
 
 # Subset metadata
 jgi_sub <- jgi_meta[jgi_meta$RQC.Seq.Unit.Name %in% seq_names,]
+dim(jgi_sub)
+length(seq_names)
+
 jgi_sub_ordered <- jgi_sub %>%
+  distinct() %>% # keep 1 of duplicates
   arrange(fct_relevel(RQC.Seq.Unit.Name, seq_names))
 
 dim(jgi_sub_ordered)[1] == length(seq_names)    # correctly subset?

@@ -30,31 +30,40 @@ out <- as.character(argv$out)
 vcf <- read.vcfR(vcffile, verbose = F)
 vcf
 
+paste0("VCF loaded")
+
 # (2) Extract heterozygous sites from vcf
-gt <- extract.gt(vcf)
-hets <- is_het(gt)
-hist(colSums(hets))
-## Censor non-heterozygous positions by changing them to NAs
-is.na(vcf@gt[,-1][!hets]) <- TRUE
+#gt <- extract.gt(vcf)
+#hets <- is_het(gt)
+## Remove non-heterozygous positions by changing them to NAs
+#is.na(vcf@gt[,-1][!hets]) <- TRUE
+
+#paste0("filtered to only heterozygous sites")
 
 # (3) Additional VCF filters
 
-## Minimum coverage of 6x per site per genotype
-vcf <- hard_filter(vcf = vcf, depth = 10)
-vcf
+## Minimum coverage of 10x per site per genotype
+#vcf <- hard_filter(vcf = vcf, depth = 10)
+#vcf
+
+#paste0("depth filtered to > 10")
 
 # (3) Extract read depths for alleles
 ## Extract allele depth
 ad <- extract.gt(vcf, element = "AD", as.numeric = F)
-dim(ad)
+#dim(ad)
+
+paste0("extracted allele depth")
 
 ## Exclude genotypes with less than 10K sites
 #sites <- colSums(!is.na(ad))
 # hist(sites, xlab = "sites with data", breaks = 10)
 
-## Write samples that failed filtering to a file
+## Parse allele depth
 refmat <- masplit(as.matrix(ad), record = 1, sort = 0)
 altmat <- masplit(as.matrix(ad), record = 2, sort = 0)
+
+paste0("allele depth parsed into ref and alt")
 
 # Estimate probabailities of allelic ratios
 propOut <- estprops(cov1 = as.matrix(altmat), # [SNPs, ind], non-ref
@@ -62,7 +71,9 @@ propOut <- estprops(cov1 = as.matrix(altmat), # [SNPs, ind], non-ref
                     props = c(0.33, 0.5, 0.66),
                     mcmc.nchain = 3, 
                     mcmc.steps = 1000, mcmc.burnin = 100, mcmc.thin = 2)
-  
+
+paste0("Estimated probabilities of alleleic ratios.")
+
 names(propOut) <- colnames(ad)
 propOut_long <- lapply(propOut, function(x){ as.data.frame(x) %>%
     tibble::rownames_to_column(var = "allelic_ratio") %>%
@@ -73,6 +84,9 @@ propOut_df <- reshape2::melt(propOut_long) %>%
 colnames(propOut_df) <- c("quantile", "proportion", "sample", "allelic_ratio")
 write.csv(propOut_df, out, row.names = F)
 
+paste0("Wrote to file. Done.")
+
+## Write samples that failed filtering to a file
 # fail <- colnames(ad)[sites < 3000]
 # write.table(fail, "/global/scratch/projects/fc_moilab/aphillips/spectral_aspen/data/gbs2ploidy/rad_aspen_predictions.mindp6.10ksites.droppedsamples.csv",
 #           row.names = F, sep = ",", col.names = F,)

@@ -4,9 +4,9 @@
 rule haplotype_caller:
     input:
         ref = config["data"]["reference"]["genome"], 
-        bam = "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{geno}.dedup.bam" 
+        bam = "data/bams/{geno}.dedup.bam" 
     output:
-        "data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz"
+        "/global/scratch/users/arphillips/data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz"
     params:
         region = "{region}",
         ploidy = "{geno_ploidy}"
@@ -28,9 +28,9 @@ rule haplotype_caller:
 ## database approach doesn't work for the scale of data
 rule merge_gvcfs:
     input: 
-        vcf = expand("data/vcf/gatk/called/{{geno}}_p{{geno_ploidy}}.{region}.haplo.g.vcf.gz", region = CHR),
+        vcf = expand("/global/scratch/users/arphillips/data/vcf/gatk/called/{{geno}}_p{{geno_ploidy}}.{region}.haplo.g.vcf.gz", region = CHR),
     output:
-        "data/vcf/gatk/merged/{geno}_p{geno_ploidy}.merged.g.vcf.gz"
+        "/global/scratch/users/arphillips/data/vcf/gatk/merged/{geno}_p{geno_ploidy}.merged.g.vcf.gz"
     params:
         pre = "data/vcf/gatk/called/{geno}",
         list = "data/vcf/gatk/called/{geno}.list"
@@ -46,7 +46,7 @@ rule merge_gvcfs:
 # (3) Individually genotype with correct ploidy level specified
 rule indv_geno:
     input:
-        vcf = "data/vcf/gatk/merged/{geno}_p{geno_ploidy}.merged.g.vcf.gz",
+        vcf = "/global/scratch/users/arphillips/data/vcf/gatk/merged/{geno}_p{geno_ploidy}.merged.g.vcf.gz",
         ref = config["data"]["reference"]["genome"]
     output:
        "data/vcf/gatk/genotyped/{geno}_p{geno_ploidy}.g.vcf.gz"
@@ -73,12 +73,12 @@ rule indv_geno:
 # java -jar GenomeAnalysisTK.jar -T ineVariants --variant /global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/vcf/gatk/genotyped/52830.3.464152.AGCTTGAG-AGCTTGAG_p2.g.vcf.gz --variant /global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/vcf/gatk/genotyped/52832.2.464561.GTGTCAAC-GTATCGTG_p3.g.vcf.gz -o test.vcf.gz -R /global/scratch/projects/fc_moilab/projects/aspen/genome/CAM1604/Populus_tremuloides_var_CAM1604-4_HAP1_V2_release/Populus_tremuloides_var_CAM1604-4/sequences/Populus_tremuloides_var_CAM1604-4_HAP1.mainGenome.fast
 rule combine_gvcfs:
     input:
-        vcfs = expand("data/vcf/gatk/genotyped/{geno}_p{geno_ploidy}.g.vcf.gz", geno = GENO, geno_ploidy = GENO_PLOIDY),
+        vcfs = expand("data/vcf/gatk/genotyped/{geno}_p{geno_ploidy}.g.vcf.gz", geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY),
         ref = config["data"]["reference"]["genome"]
     output:
         "data/vcf/gatk/genotyped/wgs_aspen.all.{chr}.g.vcf.gz"
     params:
-        extra = lambda wildcards, input: " -V ".join(input.vcfs).
+        extra = lambda wildcards, input: " -V ".join(input.vcfs),
         chr = "{chr}"
     conda: "gatk3"
     shell:

@@ -7,10 +7,10 @@ library(dplyr)
 library(tidyr)
 
 # Import propOut values ----
-dir <- "/global/scratch/users/arphillips/data/gbs2ploidy/"
+dir <- "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/gbs2ploidy/"
 
 # propOut_df <- read.csv("/global/scratch/projects/fc_moilab/aphillips/spectral_aspen/data/gbs2ploidy/flowcyt_predictions.allsnps.propOut.csv")
-propOut_files <- Sys.glob("/global/scratch/users/arphillips/data/gbs2ploidy/*.propOut.csv")
+propOut_files <- Sys.glob(paste0(dir,"*.propOut.csv"))
 propOut_list <- lapply(propOut_files, function(x) read.table(x, sep = ",", header = T))
 propOut_df <- do.call(rbind, propOut_list)
 
@@ -20,17 +20,18 @@ dim(propOut_df)
 length(unique(propOut_df$sample))
 
 # Plot propOut per sample ----
-pdf(paste0(dir, "flowcyt_predictions.plots.pdf"))
-par(mfrow=c(4,3))
-propOut_df %>%
-  dplyr::filter(quantile == '75%') %>%
-  ggplot(aes(x = as.factor(allelic_ratio), y = proportion)) +
-  geom_point() +
-  facet_wrap( ~ sample, nrow = 9) +
-  theme_bw()+
-  xlab("Allelic ratio") +
-  ylab("75th quantile of the posterior distribuion of allelic proportions")
-dev.off()
+## broken!
+# pdf(paste0(dir, "flowcyt_predictions.plots.pdf"))
+# par(mfrow=c(4,3))
+# propOut_df %>%
+#   dplyr::filter(quantile == '75%') %>%
+#   ggplot(aes(x = as.factor(allelic_ratio), y = proportion)) +
+#   geom_point() +
+#   facet_wrap( ~ sample, nrow = 9) +
+#   theme_bw()+
+#   xlab("Allelic ratio") +
+#   ylab("75th quantile of the posterior distribuion of allelic proportions")
+# dev.off()
 
 # What is the winner ----
 winner_prop <- propOut_df %>%
@@ -56,17 +57,20 @@ filter(propOut_df, sample %in% duplicates) %>%
 
 ## Keep samples with over 4 wins
 winner_num <- winner_num[winner_num$Count >= 4,]
+dim(winner_num)[1] == length(unique(propOut_df$sample))
 
 # Write class to file
 write.csv(winner_num[,c(1,4)], paste0(dir, "flow_cyt_predictions.", Sys.Date(),".csv"))
+# winner_num <- read.csv(paste0(dir, "flow_cyt_predictions.", Sys.Date(),".csv"))
 
-# winner_num <- read.csv(paste0(dir, "flow_cyt_predictions.csv"))
+###
+### Compare calls to sequence data quality to assess bias ----
+###
 
-# Compare calls to sequence data quality to assess bias ----
-meta_dir <- "/global/scratch/users/arphillips/reports/filtering/depth"
+meta_dir <- "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/reports/bamqc/"
 
 ## Average depth at all sites
-dp <- read.csv(paste0(meta_dir, "/meandepthperind.txt.idepth"), sep = "\t")
+dp <- read.csv(paste0(meta_dir, "/meancov.bamqc.txt "), sep = "\t")
 
 ## Missing data at all sites 
 miss <- read.csv(paste0(meta_dir, "/missingdataperind.txt.imiss"), sep = "\t")
@@ -125,6 +129,20 @@ dev.off()
 winner_df$ploidy_call[winner_df$nsites < 10000] <- "unknown"
 write.csv(winner_df[,c(1,3)], paste0(dir, "flow_cyt_predictions", Sys.Date(),".csv"))
 
+###
+### ** Make input file for gatk variant calling ----
+###
+
+winner_num <- read.csv(paste0(dir, "flow_cyt_predictions.", Sys.Date(),".csv"))
+head(winner_num)
+
+unique(winner_num$ploidy_call)
+winner_num$ploidy <- ifelse(winner_num$ploidy_call == "diploid", 2, 3)
+head(winner_num)
+dim(winner_num)
+
+write.csv(winner_num[,c(2,4)], "/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/ploidy.geno.1255.2026-08-07.csv",row.names = F)
+
 # Plot ploidy on map ----
 ## Map
 library(raster)
@@ -140,9 +158,9 @@ library(rnaturalearthdata)
 north_america <- ne_countries(continent = "North America", returnclass = "sf")
 states <- us_states()
 
-meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.2025-06-09.csv")
+meta <- read.csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/megametadata.2026-08-07.csv")
 meta$seqname <- gsub(x = meta$RQC.Seq.Unit.Name, pattern = ".fastq.gz", replacement = "")
-winner_meta <- merge(winner_df, meta, by.x = "sample", by.y = "seqname")
+winner_meta <- merge(winner_num, meta, by.x = "sample", by.y = "seqname")
 
 events_sf <- winner_meta %>% 
   # filter(seqname %in% ca_samples[,1]) %>%
@@ -150,9 +168,9 @@ events_sf <- winner_meta %>%
 dim(events_sf)
 
 ploidy_map <- ggplot() + 
-  geom_sf(data = north_america, size = 4, color = "black", fill = NA) +
-  geom_sf(data = states, size = 4, fill = NA, color = "black") +
-  geom_sf(data = events_sf, size = 2, aes(color = ploidy_call, shape = ploidy_call), alpha = 0.7) +
+  geom_sf(data = north_america, size = 1, color = "black", fill = NA) +
+  geom_sf(data = states, size = 1, fill = NA, color = "black") +
+  geom_sf(data = events_sf, size = 3, aes(color = ploidy_call, shape = ploidy_call), alpha = 0.7) +
   theme_bw() +
   theme(panel.grid = element_blank(), 
         axis.line = element_blank(),

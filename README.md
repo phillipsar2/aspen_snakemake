@@ -7,7 +7,7 @@ The directory roughly follows a CookieCutter directory structure.
 
 ## Running the pipeline
 <pre>
-module load anaconda3 bio/gatk java bio/samtools bio/bcftools
+module load anaconda3 bio/gatk java bio/samtools bio/bcftools vcflib
 conda activate grenepipe
 rm -r .snakemake/metadata .snakemake/log .snakemake/slurm_logs
 snakemake --executor slurm --profile profiles/ --use-conda --rerun-triggers input

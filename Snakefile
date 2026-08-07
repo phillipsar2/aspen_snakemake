@@ -45,7 +45,7 @@ DATE = datetime.datetime.utcnow().strftime("%Y-%m-%d")
 #print(GENO)
 
 # Ploidy genotype pairing
-pgfile = pd.read_csv("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/metadata/ploidy.geno.1127.2025-09-30.csv", sep = ",", header = 0)
+pgfile = pd.read_csv("metadata/ploidy.geno.1255.2026-08-07.csv", sep = ",", header = 0)
 #pgfile = pd.read_csv("metadata/ploidy.geno.1127.2025-09-30.triploids.csv", sep = ",", header = 0)
 #pgfile = pd.read_csv("metadata/california/california.ploidy.geno.01-20-2026.triploids.csv",sep = ",", header = 0)
 GENOTYPE =  list(pgfile["sample"])
@@ -58,16 +58,16 @@ rule all:
     input:
       ## Mapping
 #        bam = expand("/global/scratch/projects/fc_moilab/aphillips/aspen_snakemake/data/bams/{sample}.dedup.bam", sample = SAMPLE),
-        bamqc = expand("reports/bamqc/{sample}_stats/genome_results.txt", sample = SAMPLE),
+#        bamqc = expand("reports/bamqc/{sample}_stats/genome_results.txt", sample = SAMPLE),
 #        addeam = "/global/scratch/users/arphillips/reports/addeam/plots/damage_report_k3.pdf"
       ## Ploidy calling
-#        gbs2ploidy = expand("/global/scratch/users/arphillips/data/gbs2ploidy/{bam}.propOut.csv", bam = BAM)
+#        gbs2ploidy = expand("data/gbs2ploidy/{sample}.propOut.csv", sample = SAMPLE),
       ## Plastids
 #        map_plas = expand("/global/scratch/users/arphillips/data/interm/mapped_chl/{sample}.mapped_chl.bam", sample = SAMPLE)
 #        plas_fastq = expand("/global/scratch/users/arphillips/data/plastid/fastq/{sample}.R1.fastq.gz", sample = SAMPLE)
       ## Genotyping
 #         haplotype = expand("data/vcf/gatk/called/{geno}_p{geno_ploidy}.{region}.haplo.g.vcf.gz", geno = GENOTYPE, region = CHR, geno_ploidy = GENOTYPE_PLOIDY)
-#        genotyping = expand("data/vcf/gatk/genotyped/{geno}_p{geno_ploidy}.g.vcf.gz", zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
+        genotyping = expand("data/vcf/gatk/genotyped/{geno}_p{geno_ploidy}.g.vcf.gz", zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
 #        merge_vcfs = expand("data/vcf/gatk/genotyped/wgs_aspen.all.{chr}.g.vcf.gz", chr = CHR)
       ## Filtering
 #        qual = expand("reports/filtering/{geno}_p{geno_ploidy}.table",  zip,geno = GENOTYPE, geno_ploidy = GENOTYPE_PLOIDY)
@@ -75,8 +75,8 @@ rule all:
 # =================================================================================================
 #     Rule Modules
 # =================================================================================================
-include: "rules/mapping.smk"
+#include: "rules/mapping.smk"
 #include: "rules/bcftools_genotyping.smk"
 #include: "rules/plastid.smk"
-#include: "rules/gatk_genotyping.smk"
-include: "rules/filtering.smk"
+include: "rules/gatk_genotyping.smk"
+#include: "rules/filtering.smk"

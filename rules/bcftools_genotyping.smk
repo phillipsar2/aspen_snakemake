@@ -8,9 +8,9 @@
 rule mpileup:
     input:
         ref = config["data"]["reference"]["genome"],
-        bam = "data/bams/{bam}.dedup.bam"
+        bam = "data/bams/{sample}.dedup.bam"
     output:
-        vcf = temp("data/vcf/bcftools/raw/wgs_aspen.{bam}.raw.vcf.gz")
+        vcf = temp("data/vcf/bcftools/raw/wgs_aspen.{sample}.raw.vcf.gz")
     shell:
         """
         /global/scratch/users/arphillips/toolz/bcftools/bcftools mpileup -Ou \
@@ -23,16 +23,16 @@ rule mpileup:
 # (2) Merge vcf files
 rule merge_filt:
     input:
-        vcfs = expand("data/vcf/bcftools/raw/wgs_aspen.{bam}.raw.vcf.gz", bam = SAMPLE)
+        vcfs = expand("data/vcf/bcftools/raw/wgs_aspen.{sample}.raw.vcf.gz", sample = SAMPLE)
     output:
-        temp("data/bcftools/raw/wgs_aspen.all.raw.gz")
+        temp("data/vcf/bcftools/raw/wgs_aspen.all.raw.gz")
     params:
         list = "data/vcf/bcftools/raw/vcflist.txt",
         pattern = "data/vcf/bcftools/raw/wgs_aspen.*.raw.vcf.gz"
     shell:
         """
-        ls {params.path}*{params.suffix} > {params.list}
-        bcftools merge -l {params.pattern} --threads 10 -Oz -o {output}
+        ls {params.pattern} > {params.list}
+        bcftools merge -l {params.list} --threads 10 -Oz -o {output}
         """
 
 # (3) Filter vcf all together
@@ -42,27 +42,29 @@ rule merge_filt:
 # Genotype depth greater than 10 and less than 90
 rule bcftools_filt:
     input:
-        vcf = "data/bcftools/raw/wgs_aspen.all.raw.gz"
+        vcf = "data/vcf/bcftools/raw/wgs_aspen.all.raw.gz"
     output:
-        temp("data/bcftools/filtered/wgs_aspen.all.snps.gz")
+        temp("data/vcf/bcftools/filtered/wgs_aspen.all.snps.gz")
     shell:
         "bcftools view -v snps -m2 -M2 -i 'QUAL>=40 && MQ >=40 && FMT/DP>=10 && FMT/DP<=90' {input.vcf} -Oz -o {output}" 
 
 # (19) Determine ploidy with gbs2ploidy
 rule gbs2ploidy:
     input:
-        "data/bcftools/filtered/wgs_aspen.all.snps.gz"
+        "data/vcf/bcftools/filtered/wgs_aspen.all.snps.gz"
     output:
-        "/data/gbs2ploidy/{bam}.propOut.csv"
+        "data/gbs2ploidy/{sample}.propOut.csv"
     params:
-        geno = "{bam}",
-        tmp_dir = "/global/scratch/users/arphillips/tmp/gbs2ploidy/{bam}",
-        temp = "/global/scratch/users/arphillips/tmp/gbs2ploidy/{bam}/{bam}.vcf.gz"
-    conda: "/global/home/users/arphillips/.conda/envs/stuff_in_r"
+        geno = "{sample}",
+        tmp_dir = "/global/scratch/users/arphillips/tmp/gbs2ploidy/{sample}",
+        temp = "/global/scratch/users/arphillips/tmp/gbs2ploidy/{sample}/{sample}.vcf.gz"
+    conda: "stuff_in_r"
     shell:
         """
         mkdir -p {params.tmp_dir}
-        /global/scratch/users/arphillips/toolz/bcftools/bcftools view -Oz -s {params.geno} {input} >> {params.temp}
+        /global/scratch/users/arphillips/toolz/bcftools/bcftools view -s {params.geno} -i 'GT="het"' {input} | \
+        vcfrandomsample -r 0.01 > {params.temp}
+        
         Rscript scripts/gbs2ploidy.R {params.temp} --out {output}
         rm -rf {params.tmp_dir}
         """
